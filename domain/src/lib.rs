@@ -89,6 +89,15 @@ impl Routine {
     pub fn exercise_count(&self) -> usize {
         self.exercises.len()
     }
+
+    pub fn update_set_target_reps(
+        &self,
+        exercise_index: usize,
+        set_index: usize,
+        new_reps: u8,
+    ) -> Result<(), String> {
+        todo!()
+    }
 }
 
 impl Default for Routine {
@@ -99,6 +108,8 @@ impl Default for Routine {
 
 #[cfg(test)]
 mod tests {
+    use core::{error, panic};
+
     use super::*;
 
     #[test]
@@ -114,5 +125,17 @@ mod tests {
         assert_eq!(Ok(()), result);
         assert_eq!(workout.exercise_count(), 1);
         assert_eq!(workout.exercises[0].sets.len(), 3);
+    }
+
+    #[test]
+    fn update_the_target_reps_of_a_set() {
+        let mut workout = Routine::new();
+        workout
+            .add_exercise("Chest Press".to_string(), "Bench press".to_string())
+            .unwrap();
+
+        workout.update_set_target_reps(0, 0, 7).unwrap();
+
+        assert_eq!(workout.exercises[0].sets[0].reps, 7);
     }
 }
