@@ -30,6 +30,17 @@ pub struct WorkoutExercise {
     sets: Vec<Set>,
 }
 
+impl WorkoutExercise {
+    pub fn new(exercise_name: String, equipment: Equipment) -> Self {
+        Self {
+            id: Uuid::now_v7(),
+            exercise_name,
+            equipment,
+            sets: Vec::new(),
+        }
+    }
+}
+
 /// The aggregate root and core of the domain is tracking repeatable workouts.
 /// As such, this contains all the information necessary for a given workout.
 pub struct Workout {
@@ -56,7 +67,10 @@ impl Workout {
         exercise_name: String,
         equipment: Equipment,
     ) -> Result<(), String> {
-        Err("Unimplemented".to_string())
+        let new_exercise = WorkoutExercise::new(exercise_name, equipment);
+        self.exercises.push(new_exercise);
+
+        Ok(())
     }
 }
 
