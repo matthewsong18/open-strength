@@ -76,10 +76,12 @@ impl Routine {
         &mut self,
         exercise_name: String,
         equipment: Equipment,
+        default_sets: u8,
+        default_reps: u8,
     ) -> Result<(), String> {
         let mut new_exercise = Exercise::new(exercise_name, equipment);
-        for _ in 0..3 {
-            new_exercise.sets.push(Set::new(10))
+        for _ in 0..default_sets {
+            new_exercise.sets.push(Set::new(default_reps))
         }
         self.exercises.push(new_exercise);
 
@@ -131,7 +133,8 @@ mod tests {
     #[test]
     fn add_exercise() {
         let mut workout = Routine::new();
-        let result = workout.add_exercise("Chest Press".to_string(), "Bench Press".to_string());
+        let result =
+            workout.add_exercise("Chest Press".to_string(), "Bench Press".to_string(), 3, 10);
         assert_eq!(Ok(()), result);
         assert_eq!(workout.exercise_count(), 1);
         assert_eq!(workout.exercises[0].sets.len(), 3);
@@ -141,7 +144,7 @@ mod tests {
     fn update_the_target_reps_of_a_set() {
         let mut workout = Routine::new();
         workout
-            .add_exercise("Chest Press".to_string(), "Bench press".to_string())
+            .add_exercise("Chest Press".to_string(), "Bench press".to_string(), 3, 10)
             .unwrap();
 
         workout.update_set_target_reps(0, 0, 7).unwrap();
