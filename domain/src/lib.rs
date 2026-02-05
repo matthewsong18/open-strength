@@ -50,16 +50,20 @@ impl Workout {
     pub fn exercise_count(&self) -> usize {
         self.exercises.len()
     }
+
+    pub fn add_exercise(
+        &mut self,
+        exercise_name: String,
+        equipment: Equipment,
+    ) -> Result<(), String> {
+        Err("Unimplemented".to_string())
+    }
 }
 
 impl Default for Workout {
     fn default() -> Self {
         Self::new()
     }
-}
-
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
 }
 
 #[cfg(test)]
@@ -70,5 +74,13 @@ mod tests {
     fn init_workout() {
         let workout = Workout::new();
         assert_eq!(workout.exercise_count(), 0);
+    }
+
+    #[test]
+    fn add_exercise() {
+        let mut workout = Workout::new();
+        let result = workout.add_exercise("Chest Press".to_string(), "Bench Press".to_string());
+        assert_eq!(Ok(()), result);
+        assert_eq!(workout.exercise_count(), 1);
     }
 }
