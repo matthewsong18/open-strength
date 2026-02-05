@@ -91,12 +91,24 @@ impl Routine {
     }
 
     pub fn update_set_target_reps(
-        &self,
+        &mut self,
         exercise_index: usize,
         set_index: usize,
         new_reps: u8,
     ) -> Result<(), String> {
-        todo!()
+        let exercise = self
+            .exercises
+            .get_mut(exercise_index)
+            .ok_or("Exercise index out of bounds".to_string())?;
+
+        let set = exercise
+            .sets
+            .get_mut(set_index)
+            .ok_or("Set index out of bounds".to_string())?;
+
+        set.reps = new_reps;
+
+        Ok(())
     }
 }
 
@@ -108,8 +120,6 @@ impl Default for Routine {
 
 #[cfg(test)]
 mod tests {
-    use core::{error, panic};
-
     use super::*;
 
     #[test]
