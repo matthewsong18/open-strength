@@ -23,14 +23,14 @@ pub struct Set {
 }
 
 /// These are the individual exercises that compose a workout.
-pub struct WorkoutExercise {
+pub struct Exercise {
     id: Uuid,
     exercise_name: String,
     equipment: Equipment,
     sets: Vec<Set>,
 }
 
-impl WorkoutExercise {
+impl Exercise {
     pub fn new(exercise_name: String, equipment: Equipment) -> Self {
         Self {
             id: Uuid::now_v7(),
@@ -43,13 +43,13 @@ impl WorkoutExercise {
 
 /// The aggregate root and core of the domain is tracking repeatable workouts.
 /// As such, this contains all the information necessary for a given workout.
-pub struct Workout {
+pub struct Routine {
     id: Uuid,
     created_at: chrono::DateTime<chrono::Utc>,
-    exercises: Vec<WorkoutExercise>,
+    exercises: Vec<Exercise>,
 }
 
-impl Workout {
+impl Routine {
     pub fn new() -> Self {
         Self {
             id: Uuid::now_v7(),
@@ -67,14 +67,14 @@ impl Workout {
         exercise_name: String,
         equipment: Equipment,
     ) -> Result<(), String> {
-        let new_exercise = WorkoutExercise::new(exercise_name, equipment);
+        let new_exercise = Exercise::new(exercise_name, equipment);
         self.exercises.push(new_exercise);
 
         Ok(())
     }
 }
 
-impl Default for Workout {
+impl Default for Routine {
     fn default() -> Self {
         Self::new()
     }
@@ -86,13 +86,13 @@ mod tests {
 
     #[test]
     fn init_workout() {
-        let workout = Workout::new();
+        let workout = Routine::new();
         assert_eq!(workout.exercise_count(), 0);
     }
 
     #[test]
     fn add_exercise() {
-        let mut workout = Workout::new();
+        let mut workout = Routine::new();
         let result = workout.add_exercise("Chest Press".to_string(), "Bench Press".to_string());
         assert_eq!(Ok(()), result);
         assert_eq!(workout.exercise_count(), 1);
