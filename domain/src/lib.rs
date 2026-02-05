@@ -1,11 +1,12 @@
-use chrono;
 use uuid::Uuid;
 
+#[derive(Clone)]
 pub enum Intensity {
     RPE(u8),
     RIR(u8),
 }
 
+#[derive(Clone)]
 pub enum Weight {
     Lbs(f32),
     Kg(f32),
@@ -15,14 +16,27 @@ type Equipment = String;
 
 /// These are the sets that make up each exercise and the main tracking target
 /// for progress.
+#[derive(Clone)]
 pub struct Set {
     id: Uuid,
-    reps: u32,
-    weight: Weight,
+    reps: u8,
+    weight: Option<Weight>,
     intensity: Option<Intensity>,
 }
 
+impl Set {
+    pub fn new(reps: u8) -> Self {
+        Self {
+            id: Uuid::now_v7(),
+            reps,
+            weight: None,
+            intensity: None,
+        }
+    }
+}
+
 /// These are the individual exercises that compose a workout.
+#[derive(Clone)]
 pub struct Exercise {
     id: Uuid,
     exercise_name: String,
@@ -58,19 +72,22 @@ impl Routine {
         }
     }
 
-    pub fn exercise_count(&self) -> usize {
-        self.exercises.len()
-    }
-
     pub fn add_exercise(
         &mut self,
         exercise_name: String,
         equipment: Equipment,
     ) -> Result<(), String> {
-        let new_exercise = Exercise::new(exercise_name, equipment);
+        let mut new_exercise = Exercise::new(exercise_name, equipment);
+        for _ in 0..3 {
+            new_exercise.sets.push(Set::new(10))
+        }
         self.exercises.push(new_exercise);
 
         Ok(())
+    }
+
+    pub fn exercise_count(&self) -> usize {
+        self.exercises.len()
     }
 }
 
@@ -96,5 +113,6 @@ mod tests {
         let result = workout.add_exercise("Chest Press".to_string(), "Bench Press".to_string());
         assert_eq!(Ok(()), result);
         assert_eq!(workout.exercise_count(), 1);
+        assert_eq!(workout.exercises[0].sets.len(), 3);
     }
 }
