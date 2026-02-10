@@ -1,5 +1,4 @@
 use crate::common::Exercise;
-use crate::common::Set;
 
 use uuid::Uuid;
 
@@ -29,11 +28,15 @@ impl Routine {
     ) -> Result<(), String> {
         let mut new_exercise = Exercise::new(exercise_name, equipment);
         for _ in 0..default_sets {
-            new_exercise.sets.push(Set::new(default_reps))
+            new_exercise.add_set_with_reps(default_reps);
         }
         self.exercises.push(new_exercise);
 
         Ok(())
+    }
+
+    pub fn get_exercise(&self, exercise_index: usize) -> Option<&Exercise> {
+        self.exercises.get(exercise_index)
     }
 
     pub fn exercise_count(&self) -> usize {
@@ -51,12 +54,7 @@ impl Routine {
             .get_mut(exercise_index)
             .ok_or("Exercise index out of bounds".to_string())?;
 
-        let set = exercise
-            .sets
-            .get_mut(set_index)
-            .ok_or("Set index out of bounds".to_string())?;
-
-        set.reps = new_reps;
+        exercise.update_set_reps(set_index, new_reps)?;
 
         Ok(())
     }
@@ -85,7 +83,8 @@ mod tests {
             workout.add_exercise("Chest Press".to_string(), "Bench Press".to_string(), 3, 10);
         assert_eq!(Ok(()), result);
         assert_eq!(workout.exercise_count(), 1);
-        assert_eq!(workout.exercises[0].sets.len(), 3);
+        let exercise: &Exercise = workout.get_exercise(0).unwrap();
+        assert_eq!(exercise.get_sets().len(), 3);
     }
 
     #[test]
@@ -97,6 +96,7 @@ mod tests {
 
         workout.update_set_target_reps(0, 0, 7).unwrap();
 
-        assert_eq!(workout.exercises[0].sets[0].reps, 7);
+        let exercise: &Exercise = workout.get_exercise(0).unwrap();
+        assert_eq!(exercise.get_sets()[0].get_reps(), 7);
     }
 }

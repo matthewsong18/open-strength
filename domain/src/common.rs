@@ -16,10 +16,10 @@ pub enum Weight {
 /// for progress.
 #[derive(Clone)]
 pub struct Set {
-    pub id: Uuid,
-    pub reps: u8,
-    pub weight: Option<Weight>,
-    pub intensity: Option<Intensity>,
+    id: Uuid,
+    reps: u8,
+    weight: Option<Weight>,
+    intensity: Option<Intensity>,
 }
 
 impl Set {
@@ -31,15 +31,19 @@ impl Set {
             intensity: None,
         }
     }
+
+    pub fn get_reps(&self) -> u8 {
+        self.reps
+    }
 }
 
 /// These are the individual exercises that compose a workout.
 #[derive(Clone)]
 pub struct Exercise {
-    pub id: Uuid,
-    pub exercise_name: String,
-    pub equipment: String,
-    pub sets: Vec<Set>,
+    id: Uuid,
+    exercise_name: String,
+    equipment: String,
+    sets: Vec<Set>,
 }
 
 impl Exercise {
@@ -58,6 +62,17 @@ impl Exercise {
 
     pub fn add_set_with_reps(&mut self, reps: u8) {
         self.sets.push(Set::new(reps));
+    }
+
+    pub fn update_set_reps(&mut self, set_index: usize, new_reps: u8) -> Result<(), String> {
+        let set = self
+            .sets
+            .get_mut(set_index)
+            .ok_or("Set index out of bounds".to_string())?;
+
+        set.reps = new_reps;
+
+        Ok(())
     }
 
     pub fn get_sets(&self) -> Vec<Set> {
