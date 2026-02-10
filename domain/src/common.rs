@@ -1,12 +1,10 @@
 use uuid::Uuid;
 
-#[derive(Clone)]
 pub enum Intensity {
     RIR(u8),
     RPE(u8),
 }
 
-#[derive(Clone)]
 pub enum Weight {
     Lbs(f32),
     Kg(f32),
@@ -14,7 +12,6 @@ pub enum Weight {
 
 /// These are the sets that make up each exercise and the main tracking target
 /// for progress.
-#[derive(Clone)]
 pub struct Set {
     id: Uuid,
     reps: u8,
@@ -38,7 +35,6 @@ impl Set {
 }
 
 /// These are the individual exercises that compose a workout.
-#[derive(Clone)]
 pub struct Exercise {
     id: Uuid,
     exercise_name: String,
@@ -75,7 +71,7 @@ impl Exercise {
         Ok(())
     }
 
-    pub fn get_sets(&self) -> Vec<Set> {
-        self.sets.clone()
+    pub fn get_sets(&self) -> &[Set] {
+        &self.sets
     }
 }
