@@ -52,7 +52,13 @@ impl Exercise {
         }
     }
 
-    pub fn add_set(&mut self) -> Result<(), String> {
-        todo!()
+    pub fn add_set(&mut self) {
+        let default_reps = 10;
+        let new_set = Set::new(default_reps);
+        self.sets.push(new_set);
+    }
+
+    pub fn get_sets(&self) -> Vec<Set> {
+        self.sets.clone()
     }
 }
