@@ -1,30 +1,30 @@
+mod common;
 use domain::{common::Exercise, routine::Routine};
 
+use crate::common::create_test_exercise;
+
 #[test]
-fn init_workout() {
-    let workout = Routine::new();
-    assert_eq!(workout.exercise_count(), 0);
+fn test_init_workout() {
+    let routine = Routine::new();
+    assert_eq!(routine.exercise_count(), 0);
 }
 
 #[test]
-fn add_exercise() {
-    let mut workout = Routine::new();
-    let result = workout.add_exercise("Chest Press".to_string(), "Bench Press".to_string(), 3, 10);
-    assert_eq!(Ok(()), result);
-    assert_eq!(workout.exercise_count(), 1);
-    let exercise: &Exercise = workout.get_exercise(0).unwrap();
+fn test_add_exercise() {
+    let mut routine: Routine = Routine::new();
+    create_test_exercise(&mut routine).unwrap();
+    assert_eq!(routine.exercise_count(), 1);
+    let exercise: &Exercise = routine.get_exercise(0).unwrap();
     assert_eq!(exercise.get_sets().len(), 3);
 }
 
 #[test]
-fn update_the_target_reps_of_a_set() {
-    let mut workout = Routine::new();
-    workout
-        .add_exercise("Chest Press".to_string(), "Bench press".to_string(), 3, 10)
-        .unwrap();
+fn test_update_the_target_reps_of_a_set() {
+    let mut routine = Routine::new();
+    create_test_exercise(&mut routine).unwrap();
 
-    workout.update_set_target_reps(0, 0, 7).unwrap();
+    routine.update_set_target_reps(0, 0, 7).unwrap();
 
-    let exercise: &Exercise = workout.get_exercise(0).unwrap();
+    let exercise: &Exercise = routine.get_exercise(0).unwrap();
     assert_eq!(exercise.get_sets()[0].get_reps(), 7);
 }
