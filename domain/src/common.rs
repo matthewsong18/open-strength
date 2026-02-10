@@ -51,4 +51,8 @@ impl Exercise {
             sets: Vec::new(),
         }
     }
+
+    pub fn add_set(&mut self) -> Result<(), String> {
+        todo!()
+    }
 }
