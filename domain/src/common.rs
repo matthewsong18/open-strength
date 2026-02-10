@@ -53,9 +53,11 @@ impl Exercise {
     }
 
     pub fn add_set(&mut self) {
-        let default_reps = 10;
-        let new_set = Set::new(default_reps);
-        self.sets.push(new_set);
+        self.sets.push(Set::new(10));
+    }
+
+    pub fn add_set_with_reps(&mut self, reps: u8) {
+        self.sets.push(Set::new(reps));
     }
 
     pub fn get_sets(&self) -> Vec<Set> {
