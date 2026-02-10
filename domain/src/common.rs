@@ -52,12 +52,15 @@ impl Exercise {
         }
     }
 
-    pub fn add_set(&mut self) {
-        self.sets.push(Set::new(10));
+    pub fn add_set(&mut self, reps: u8) {
+        self.sets.push(Set::new(reps));
     }
 
-    pub fn add_set_with_reps(&mut self, reps: u8) {
-        self.sets.push(Set::new(reps));
+    pub fn with_sets(mut self, sets: u8, reps: u8) -> Self {
+        for _ in 0..sets {
+            self.add_set(reps);
+        }
+        self
     }
 
     pub fn update_set_reps(&mut self, set_index: usize, new_reps: u8) -> Result<(), String> {

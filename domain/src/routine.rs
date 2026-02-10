@@ -19,20 +19,8 @@ impl Routine {
         }
     }
 
-    pub fn add_exercise(
-        &mut self,
-        exercise_name: String,
-        equipment: String,
-        default_sets: u8,
-        default_reps: u8,
-    ) -> Result<(), String> {
-        let mut new_exercise = Exercise::new(exercise_name, equipment);
-        for _ in 0..default_sets {
-            new_exercise.add_set_with_reps(default_reps);
-        }
-        self.exercises.push(new_exercise);
-
-        Ok(())
+    pub fn add_exercise(&mut self, exercise: Exercise) {
+        self.exercises.push(exercise);
     }
 
     pub fn get_exercise(&self, exercise_index: usize) -> Option<&Exercise> {

@@ -7,7 +7,7 @@ fn test_exercise_add_set() {
     let start_count = exercise.get_sets().len();
     assert_eq!(0, start_count);
 
-    exercise.add_set();
+    exercise.add_set(10);
 
     let end_count = exercise.get_sets().len();
     assert_eq!(1, end_count);
