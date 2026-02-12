@@ -37,7 +37,7 @@ impl Set {
 /// These are the individual exercises that compose a workout.
 pub struct Exercise {
     id: Uuid,
-    exercise_name: String,
+    name: String,
     equipment: String,
     sets: Vec<Set>,
 }
@@ -46,7 +46,7 @@ impl Exercise {
     pub fn new(exercise_name: String, equipment: String) -> Self {
         Self {
             id: Uuid::now_v7(),
-            exercise_name,
+            name: exercise_name,
             equipment,
             sets: Vec::new(),
         }
@@ -76,5 +76,17 @@ impl Exercise {
 
     pub fn get_sets(&self) -> &[Set] {
         &self.sets
+    }
+
+    pub fn id(&self) -> Uuid {
+        self.id
+    }
+
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn set_name(&mut self, new_name: String) {
+        self.name = new_name
     }
 }

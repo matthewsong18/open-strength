@@ -46,6 +46,10 @@ impl Routine {
 
         Ok(())
     }
+
+    pub fn add_set_to_exercise(&self, exercise_id: Uuid, reps: u8) {
+        todo!()
+    }
 }
 
 impl Default for Routine {
