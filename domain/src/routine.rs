@@ -37,14 +37,10 @@ impl Routine {
         set_index: usize,
         new_reps: u8,
     ) -> Result<(), String> {
-        let exercise = self
-            .exercises
+        self.exercises
             .get_mut(exercise_index)
-            .ok_or("Exercise index out of bounds".to_string())?;
-
-        exercise.update_set_reps(set_index, new_reps)?;
-
-        Ok(())
+            .map(|exercise| exercise.update_set_reps(set_index, new_reps))
+            .ok_or("Exercise index out of bounds".to_string())?
     }
 
     pub fn add_set_to_exercise(&mut self, exercise_id: Uuid, reps: u8) -> Result<(), String> {
