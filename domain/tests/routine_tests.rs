@@ -33,12 +33,14 @@ fn test_update_the_target_reps_of_a_set() {
 fn test_adding_sets_to_routine() {
     let mut routine = Routine::new();
     let initial_exercise = Exercise::new("Test".to_string(), "Test".to_string());
+    assert_eq!(0, initial_exercise.get_sets().len());
+
     routine.add_exercise(initial_exercise);
 
     let exercise_id = routine.get_exercise(0).unwrap().id();
-    routine.add_set_to_exercise(exercise_id, 10);
+    routine.add_set_to_exercise(exercise_id, 10).unwrap();
 
     let modified_exercise = routine.get_exercise(0).unwrap();
     let new_set_count = modified_exercise.get_sets().len();
-    assert_eq!(2, new_set_count);
+    assert_eq!(1, new_set_count);
 }

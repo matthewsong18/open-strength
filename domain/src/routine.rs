@@ -47,8 +47,14 @@ impl Routine {
         Ok(())
     }
 
-    pub fn add_set_to_exercise(&self, exercise_id: Uuid, reps: u8) {
-        todo!()
+    pub fn add_set_to_exercise(&mut self, exercise_id: Uuid, reps: u8) -> Result<(), String> {
+        self.exercises
+            .iter_mut()
+            .find(|exercise| exercise.id() == exercise_id)
+            .map(|exercise| {
+                exercise.add_set(reps);
+            })
+            .ok_or_else(|| format!("Exercise with ID {} not found", exercise_id))
     }
 }
 
