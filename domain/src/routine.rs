@@ -1,12 +1,13 @@
 use crate::common::Exercise;
 
+use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 /// The aggregate root and core of the domain is tracking repeatable workouts.
 /// As such, this contains all the information necessary for a given workout.
 pub struct Routine {
     id: Uuid,
-    created_at: chrono::DateTime<chrono::Utc>,
+    created_at: DateTime<Utc>,
     exercises: Vec<Exercise>,
 }
 
@@ -14,9 +15,17 @@ impl Routine {
     pub fn new() -> Self {
         Self {
             id: Uuid::now_v7(),
-            created_at: chrono::Utc::now(),
+            created_at: Utc::now(),
             exercises: Vec::new(),
         }
+    }
+
+    pub fn id(&self) -> Uuid {
+        self.id
+    }
+
+    pub fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
     }
 
     pub fn add_exercise(&mut self, exercise: Exercise) {

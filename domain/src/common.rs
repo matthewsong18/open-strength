@@ -1,10 +1,12 @@
 use uuid::Uuid;
 
+#[derive(Clone)]
 pub enum Intensity {
     RIR(u8),
     RPE(u8),
 }
 
+#[derive(Clone)]
 pub enum Weight {
     Lbs(f32),
     Kg(f32),
@@ -27,6 +29,18 @@ impl Set {
             weight: None,
             intensity: None,
         }
+    }
+
+    pub fn id(&self) -> Uuid {
+        self.id
+    }
+
+    pub fn weight(&self) -> Option<Weight> {
+        self.weight.clone()
+    }
+
+    pub fn intensity(&self) -> Option<Intensity> {
+        self.intensity.clone()
     }
 
     pub fn get_reps(&self) -> u8 {
@@ -88,5 +102,9 @@ impl Exercise {
 
     pub fn set_name(&mut self, new_name: String) {
         self.name = new_name
+    }
+
+    pub fn equipment(&self) -> &str {
+        self.equipment.as_ref()
     }
 }
