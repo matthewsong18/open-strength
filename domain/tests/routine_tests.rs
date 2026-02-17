@@ -27,6 +27,10 @@ fn test_update_the_target_reps_of_a_set() {
 
     let exercise: &Exercise = routine.get_exercise(0).unwrap();
     assert_eq!(exercise.get_sets()[0].get_reps(), 7);
+
+    // Testing wrong index
+    routine.update_set_target_reps(10, 0, 10).unwrap_err();
+    routine.update_set_target_reps(0, 10, 10).unwrap_err();
 }
 
 #[test]
