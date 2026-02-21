@@ -10,7 +10,8 @@
     };
   };
 
-  outputs = { nixpkgs, rust-overlay, ... }:
+  outputs =
+    { nixpkgs, rust-overlay, ... }:
     let
       system = "aarch64-darwin";
       pkgs = import nixpkgs {
@@ -18,11 +19,18 @@
         # Adding the rust overlay pkgs
         overlays = [ (import rust-overlay) ];
       };
-      
+
       # Specify the latest stable rust version
       toolchain = pkgs.rust-bin.stable.latest.default.override {
         # Adding eextensions for IDE
-        extensions = [ "rust-src" "rust-analyzer" "clippy" ];
+        extensions = [
+          "rust-src"
+          "rust-analyzer"
+          "clippy"
+        ];
+
+        # WASM target for dioxus web build (PWA)
+        targets = [ "wasm32-unknown-unknown" ];
       };
     in
     {
@@ -33,11 +41,13 @@
           # Adding useful packages
           pkgs.bacon
           pkgs.cargo-watch
+          pkgs.dioxus-cli
+          pkgs.wasm-bindgen-cli
         ];
 
         # ENV variables
         RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
-        
+
         shellHook = ''
           echo "Environment loaded. Ready to test."
         '';
