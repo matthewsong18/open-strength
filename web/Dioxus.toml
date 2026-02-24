@@ -1,9 +1,17 @@
 [application]
 
+name = "Open Strength"
+
+default_platform = "web"
+
+out_dir = "dist"
+
+asset_dir = "public"
+
 [web.app]
 
 # HTML title tag content
-title = "web"
+title = "Open Strength"
 
 # include `assets` in web platform
 [web.resource]
@@ -19,3 +27,9 @@ script = []
 # Javascript code file
 # serve: [dev-server] only
 script = []
+
+[web.watcher]
+
+reload_html = true
+
+watch_path = ["src", "assets", "public"]

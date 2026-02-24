@@ -1,0 +1,9 @@
+{
+  "name": "Open Strength",
+  "short_name": "Open Strength",
+  "description": "An open-source, privacy-first, strength training tracker.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
