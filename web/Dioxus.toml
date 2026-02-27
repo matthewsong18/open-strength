@@ -6,8 +6,6 @@ default_platform = "web"
 
 out_dir = "dist"
 
-asset_dir = "public"
-
 [web.app]
 
 # HTML title tag content
@@ -32,4 +30,4 @@ script = []
 
 reload_html = true
 
-watch_path = ["src", "assets", "public"]
+watch_path = ["src", "assets"]
