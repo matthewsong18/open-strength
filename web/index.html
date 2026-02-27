@@ -5,8 +5,6 @@
     <script>
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("sw.js")
-          .then(reg => console.log("SW Registered at scope:", reg.scope))
-          .catch(err => console.error("SW Registration failed:", err));
       }
     </script>
     <link rel="manifest" href="manifest.json" />
