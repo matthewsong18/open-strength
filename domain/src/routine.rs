@@ -7,6 +7,7 @@ use uuid::Uuid;
 /// As such, this contains all the information necessary for a given workout.
 pub struct Routine {
     id: Uuid,
+    name: String,
     created_at: DateTime<Utc>,
     exercises: Vec<Exercise>,
 }
@@ -15,6 +16,7 @@ impl Routine {
     pub fn new() -> Self {
         Self {
             id: Uuid::now_v7(),
+            name: "Untitled Routine".to_string(),
             created_at: Utc::now(),
             exercises: Vec::new(),
         }
@@ -24,8 +26,17 @@ impl Routine {
         self.id
     }
 
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
     pub fn created_at(&self) -> DateTime<Utc> {
         self.created_at
+    }
+
+    pub fn with_name(mut self, name: impl Into<String>) -> Self {
+        self.name = name.into();
+        self
     }
 
     pub fn add_exercise(&mut self, exercise: Exercise) {
@@ -60,14 +71,6 @@ impl Routine {
                 exercise.add_set(reps);
             })
             .ok_or_else(|| format!("Exercise with ID {} not found", exercise_id))
-    }
-
-    pub fn with_name(mut self, name: impl Into<String>) -> Self {
-        todo!()
-    }
-
-    pub fn get_name(&self) -> &str {
-        todo!()
     }
 }
 

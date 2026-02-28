@@ -53,9 +53,9 @@ fn test_adding_sets_to_routine() {
 fn test_add_name_to_routine() {
     let mut routine: Routine = Routine::new();
 
-    assert_eq!("Untitled Routine", routine.get_name());
+    assert_eq!("Untitled Routine", routine.name());
 
     routine = routine.with_name("Push Day");
 
-    assert_eq!("Push Day", routine.get_name());
+    assert_eq!("Push Day", routine.name());
 }
