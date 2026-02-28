@@ -61,6 +61,14 @@ impl Routine {
             })
             .ok_or_else(|| format!("Exercise with ID {} not found", exercise_id))
     }
+
+    pub fn with_name(mut self, name: impl Into<String>) -> Self {
+        todo!()
+    }
+
+    pub fn get_name(&self) -> &str {
+        todo!()
+    }
 }
 
 impl Default for Routine {

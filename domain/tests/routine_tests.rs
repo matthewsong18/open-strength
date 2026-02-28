@@ -48,3 +48,14 @@ fn test_adding_sets_to_routine() {
     let new_set_count = modified_exercise.get_sets().len();
     assert_eq!(1, new_set_count);
 }
+
+#[test]
+fn test_add_name_to_routine() {
+    let mut routine: Routine = Routine::new();
+
+    assert_eq!("Untitled Routine", routine.get_name());
+
+    routine = routine.with_name("Push Day");
+
+    assert_eq!("Push Day", routine.get_name());
+}
