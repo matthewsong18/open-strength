@@ -1,7 +1,19 @@
 use domain::routine_repository::RoutineRepository;
 use uuid::Uuid;
 
-struct MemoryRoutineRepository {}
+pub struct MemoryRoutineRepository {}
+
+impl MemoryRoutineRepository {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for MemoryRoutineRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl RoutineRepository for MemoryRoutineRepository {
     async fn get_all(&self) -> Result<Vec<domain::routine::Routine>, String> {
