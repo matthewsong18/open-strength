@@ -28,7 +28,9 @@ impl RoutineRepository for MemoryRoutineRepository {
     }
 
     async fn get_by_id(&self, id: Uuid) -> Result<Option<Routine>, String> {
-        todo!()
+        let storage = self.routine_storage.lock().map_err(|_| "Lock poisoned")?;
+        let routine: Option<Routine> = storage.iter().find(|routine| routine.id() == id).cloned();
+        Ok(routine)
     }
 
     async fn save(&self, routine: Routine) -> Result<(), String> {
