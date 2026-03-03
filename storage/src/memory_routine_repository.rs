@@ -1,14 +1,16 @@
+use std::sync::Mutex;
+
 use domain::{routine::Routine, routine_repository::RoutineRepository};
 use uuid::Uuid;
 
 pub struct MemoryRoutineRepository {
-    routine_storage: Vec<Routine>,
+    routine_storage: Mutex<Vec<Routine>>,
 }
 
 impl MemoryRoutineRepository {
     pub fn new() -> Self {
         Self {
-            routine_storage: Vec::new(),
+            routine_storage: Mutex::new(Vec::new()),
         }
     }
 }
@@ -20,15 +22,18 @@ impl Default for MemoryRoutineRepository {
 }
 
 impl RoutineRepository for MemoryRoutineRepository {
-    async fn get_all(&self) -> Result<Vec<domain::routine::Routine>, String> {
-        Ok(self.routine_storage.clone())
+    async fn get_all(&self) -> Result<Vec<Routine>, String> {
+        let storage = self.routine_storage.lock().map_err(|_| "Lock poisoned")?;
+        Ok(storage.clone())
     }
 
-    async fn get_by_id(&self, id: Uuid) -> Result<Option<domain::routine::Routine>, String> {
+    async fn get_by_id(&self, id: Uuid) -> Result<Option<Routine>, String> {
         todo!()
     }
 
-    async fn save(&self, routine: domain::routine::Routine) -> Result<(), String> {
-        todo!()
+    async fn save(&self, routine: Routine) -> Result<(), String> {
+        let mut storage = self.routine_storage.lock().map_err(|_| "Lock poisoned")?;
+        storage.push(routine);
+        Ok(())
     }
 }
