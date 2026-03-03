@@ -9,6 +9,7 @@ edition = "2024"
 [dependencies]
 dioxus = { version = "0.7.3", features = ["router"] }
 domain = { path = "../domain" }
+storage = { path = "../storage" }
 
 [features]
 default = ["web"]

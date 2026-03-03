@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+async-trait = "0.1.89"
 domain = { path = "../domain" }
 uuid = { version = "1.20", features = [ "v7", "serde", "js"] }
 

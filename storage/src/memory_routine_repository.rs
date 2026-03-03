@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use std::sync::Mutex;
 
 use domain::{routine::Routine, routine_repository::RoutineRepository};
@@ -13,6 +14,15 @@ impl MemoryRoutineRepository {
             routine_storage: Mutex::new(Vec::new()),
         }
     }
+
+    pub fn with_mock_data() -> Self {
+        let dummy_1 = Routine::new().with_name("Push Day");
+        let dummy_2 = Routine::new().with_name("Pull Day");
+
+        Self {
+            routine_storage: Mutex::new(vec![dummy_1, dummy_2]),
+        }
+    }
 }
 
 impl Default for MemoryRoutineRepository {
@@ -21,6 +31,7 @@ impl Default for MemoryRoutineRepository {
     }
 }
 
+#[async_trait]
 impl RoutineRepository for MemoryRoutineRepository {
     async fn get_all(&self) -> Result<Vec<Routine>, String> {
         let storage = self.routine_storage.lock().map_err(|_| "Lock poisoned")?;
