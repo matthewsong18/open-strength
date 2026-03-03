@@ -1,11 +1,15 @@
-use domain::routine_repository::RoutineRepository;
+use domain::{routine::Routine, routine_repository::RoutineRepository};
 use uuid::Uuid;
 
-pub struct MemoryRoutineRepository {}
+pub struct MemoryRoutineRepository {
+    routine_storage: Vec<Routine>,
+}
 
 impl MemoryRoutineRepository {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            routine_storage: Vec::new(),
+        }
     }
 }
 
@@ -17,7 +21,7 @@ impl Default for MemoryRoutineRepository {
 
 impl RoutineRepository for MemoryRoutineRepository {
     async fn get_all(&self) -> Result<Vec<domain::routine::Routine>, String> {
-        todo!()
+        Ok(self.routine_storage.clone())
     }
 
     async fn get_by_id(&self, id: Uuid) -> Result<Option<domain::routine::Routine>, String> {

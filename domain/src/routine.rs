@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 /// The aggregate root and core of the domain is tracking repeatable workouts.
 /// As such, this contains all the information necessary for a given workout.
+#[derive(Clone)]
 pub struct Routine {
     id: Uuid,
     name: String,

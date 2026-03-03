@@ -14,6 +14,7 @@ pub enum Weight {
 
 /// These are the sets that make up each exercise and the main tracking target
 /// for progress.
+#[derive(Clone)]
 pub struct Set {
     id: Uuid,
     reps: u8,
@@ -49,6 +50,7 @@ impl Set {
 }
 
 /// These are the individual exercises that compose a workout.
+#[derive(Clone)]
 pub struct Exercise {
     id: Uuid,
     name: String,
