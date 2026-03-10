@@ -26,6 +26,11 @@ pub fn Home() -> Element {
                     for r in routine_list {
                         article {
                             h2 { "{r.name()}" }
+
+                            p {
+                                "Number of Exercises: {r.get_exercises().len()}"
+                            }
+
                             button {
                                 "Start Workout"
                             }
