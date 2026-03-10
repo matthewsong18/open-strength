@@ -11,6 +11,9 @@ pub fn NewRoutine() -> Element {
     let navigator = use_navigator();
 
     let mut new_routine = use_signal(Routine::new);
+    let mut new_exercise = use_signal(Exercise::default);
+
+    let mut is_adding_exercise = use_signal(|| false);
 
     let save_routine = move |event: Event<FormData>| {
         event.prevent_default();
@@ -27,15 +30,81 @@ pub fn NewRoutine() -> Element {
         });
     };
 
-    let add_new_exercise = move |_| {
-        let new_exercise = Exercise::new(
-            "Exercise Name".to_string(),
-            "Exercise Equipment".to_string(),
-        )
-        .with_sets(3, 10);
+    let add_new_exercise = move |event: Event<FormData>| {
+        event.prevent_default();
 
-        new_routine.write().add_exercise(new_exercise);
+        let exercise_to_add = new_exercise.read().clone();
+
+        new_routine.write().add_exercise(exercise_to_add);
+
+        new_exercise.set(Exercise::default());
+        is_adding_exercise.set(false);
     };
+
+    if *is_adding_exercise.read() {
+        return rsx! {
+            main {
+                h2 { "Add an Exercise" }
+
+                form {
+                    onsubmit: add_new_exercise,
+
+                    div {
+                        label { "Exercise Name:" }
+                        input {
+                            type: "text",
+                            value: "{new_exercise.read().name()}",
+                            oninput: move |event| new_exercise.write().set_name(event.value()),
+                            required: true
+                        }
+                    }
+
+                    div {
+                        label { "Equipment:" }
+                        input {
+                            type: "text",
+                            value: "{new_exercise.read().equipment()}",
+                            oninput: move |event| new_exercise.write().set_equipment(event.value()),
+                            required: true
+                        }
+                    }
+
+                    for (index, set) in new_exercise.read().get_sets().iter().enumerate() {
+                        div {
+                            label { "Reps:" }
+                            input {
+                                type: "number",
+                                value: "{set.reps()}",
+                                oninput: move |event| {
+                                    if let Ok(reps) = event.value().parse::<u8>() {
+                                        let _ = new_exercise.write().update_set_reps(index, reps);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    button {
+                        type: "button",
+                        onclick: move |_| new_exercise.write().add_set(10),
+                        "Add A Set"
+                    }
+
+                    button {
+                        type: "submit",
+                        "Add Exercise"
+                    }
+
+                    button {
+                        type: "button",
+                        onclick: move |_| is_adding_exercise.set(false),
+                        "Cancel"
+                    }
+                }
+            }
+
+        };
+    }
 
     rsx! {
         main {
@@ -60,7 +129,7 @@ pub fn NewRoutine() -> Element {
 
                 button {
                     type: "button",
-                    onclick: add_new_exercise,
+                    onclick: move |_| is_adding_exercise.set(true),
                     "Add Exercise"
                 }
 

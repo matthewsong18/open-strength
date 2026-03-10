@@ -61,10 +61,9 @@ pub struct Exercise {
 impl Exercise {
     pub fn new(exercise_name: impl Into<String>, equipment: impl Into<String>) -> Self {
         Self {
-            id: Uuid::now_v7(),
             name: exercise_name.into(),
             equipment: equipment.into(),
-            sets: Vec::new(),
+            ..Default::default()
         }
     }
 
@@ -108,5 +107,20 @@ impl Exercise {
 
     pub fn equipment(&self) -> &str {
         self.equipment.as_ref()
+    }
+
+    pub fn set_equipment(&mut self, new_equipment: impl Into<String>) {
+        self.equipment = new_equipment.into()
+    }
+}
+
+impl Default for Exercise {
+    fn default() -> Self {
+        Self {
+            id: Uuid::now_v7(),
+            name: "Untitled Exercise".into(),
+            equipment: "None".into(),
+            sets: Vec::new(),
+        }
     }
 }
