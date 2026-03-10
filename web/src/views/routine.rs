@@ -51,6 +51,13 @@ pub fn NewRoutine() -> Element {
                     required: true
                 }
 
+                for exercise in new_routine.read().get_exercises() {
+                    div {
+                        p { "{exercise.name()}" }
+                        p { "Sets: {exercise.get_sets().len()}" }
+                    }
+                }
+
                 button {
                     type: "button",
                     onclick: add_new_exercise,

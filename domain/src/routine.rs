@@ -52,6 +52,10 @@ impl Routine {
         self.exercises.get(exercise_index)
     }
 
+    pub fn get_exercises(&self) -> &[Exercise] {
+        &self.exercises
+    }
+
     pub fn exercise_count(&self) -> usize {
         self.exercises.len()
     }

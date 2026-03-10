@@ -44,7 +44,7 @@ impl Set {
         self.intensity.clone()
     }
 
-    pub fn get_reps(&self) -> u8 {
+    pub fn reps(&self) -> u8 {
         self.reps
     }
 }
@@ -59,11 +59,11 @@ pub struct Exercise {
 }
 
 impl Exercise {
-    pub fn new(exercise_name: String, equipment: String) -> Self {
+    pub fn new(exercise_name: impl Into<String>, equipment: impl Into<String>) -> Self {
         Self {
             id: Uuid::now_v7(),
-            name: exercise_name,
-            equipment,
+            name: exercise_name.into(),
+            equipment: equipment.into(),
             sets: Vec::new(),
         }
     }
@@ -102,8 +102,8 @@ impl Exercise {
         self.name.clone()
     }
 
-    pub fn set_name(&mut self, new_name: String) {
-        self.name = new_name
+    pub fn set_name(&mut self, new_name: impl Into<String>) {
+        self.name = new_name.into()
     }
 
     pub fn equipment(&self) -> &str {

@@ -26,7 +26,7 @@ fn test_update_the_target_reps_of_a_set() {
     routine.update_set_target_reps(0, 0, 7).unwrap();
 
     let exercise: &Exercise = routine.get_exercise(0).unwrap();
-    assert_eq!(exercise.get_sets()[0].get_reps(), 7);
+    assert_eq!(exercise.get_sets()[0].reps(), 7);
 
     // Testing wrong index
     routine.update_set_target_reps(10, 0, 10).unwrap_err();
@@ -58,4 +58,48 @@ fn test_add_name_to_routine() {
     routine = routine.with_name("Push Day");
 
     assert_eq!("Push Day", routine.name());
+}
+
+#[test]
+fn test_viewing_exercises() {
+    let mut routine = Routine::new();
+    routine.add_exercise(Exercise::new("Chest Press", "Bench Press").with_sets(3, 10));
+    routine.add_exercise(Exercise::new("Leg Press", "Leg Machine").with_sets(2, 8));
+
+    let exercises = routine.get_exercises();
+
+    assert_eq!(2, exercises.len());
+    let chest_exercise = exercises
+        .iter()
+        .find(|e| e.name() == "Chest Press")
+        .expect("chest_exercise shouldn't be None");
+
+    let chest_sets = 3;
+    let chest_reps = 10;
+    assert_eq!(chest_sets, chest_exercise.get_sets().len());
+    assert_eq!(
+        chest_reps,
+        chest_exercise
+            .get_sets()
+            .first()
+            .expect("should be at least one set")
+            .reps()
+    );
+
+    let leg_exercise = exercises
+        .iter()
+        .find(|e| e.name() == "Leg Press")
+        .expect("leg_exercise shouldn't be None");
+
+    let leg_sets = 2;
+    let leg_reps = 8;
+    assert_eq!(leg_sets, leg_exercise.get_sets().len());
+    assert_eq!(
+        leg_reps,
+        leg_exercise
+            .get_sets()
+            .first()
+            .expect("should be at least one set")
+            .reps()
+    );
 }
