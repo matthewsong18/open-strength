@@ -1,13 +1,9 @@
-use domain::{common::Exercise, routine::Routine, workout::Workout};
+mod common;
+use common::create_test_workout;
 
 #[test]
 fn test_start_live_workout() {
-    let mut routine: Routine = Routine::default().with_name("Push Day");
-    routine.add_exercise(Exercise::default().with_sets(3, 10));
-    routine.add_exercise(Exercise::default().with_sets(3, 10));
-    routine.add_exercise(Exercise::default().with_sets(3, 10));
-
-    let workout: Workout = Workout::from_routine(&routine);
+    let workout = create_test_workout();
 
     let exercises = workout.get_exercises();
     assert_eq!(3, exercises.len());
