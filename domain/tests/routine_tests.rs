@@ -4,7 +4,7 @@ use domain::{common::Exercise, routine::Routine};
 use common::create_test_exercise;
 
 #[test]
-fn test_init_workout() {
+fn test_init_routine() {
     let routine = Routine::new();
     assert_eq!(routine.exercise_count(), 0);
 }
