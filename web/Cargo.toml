@@ -15,3 +15,6 @@ storage = { path = "../storage" }
 default = ["web"]
 # The feature that are only required for the web = ["dioxus/web"] build target should be optional and only enabled in the web = ["dioxus/web"] feature
 web = ["dioxus/web"]
+
+[lints]
+workspace = true
