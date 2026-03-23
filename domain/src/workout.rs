@@ -22,7 +22,7 @@ impl Workout {
 
     pub fn from_routine(routine: &Routine) -> Self {
         Self {
-            source_routine_id: Some(routine.id()),
+            source_routine_id: Some(*routine.id()),
             name: routine.name().to_string(),
             exercises: routine.get_exercises().to_vec(),
             ..Default::default()

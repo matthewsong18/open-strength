@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use std::sync::Mutex;
 
-use domain::{routine::Routine, routine_repository::RoutineRepository};
+use domain::routine::ports::RoutineRepository;
 use uuid::Uuid;
 
 pub struct MemoryRoutineRepository {

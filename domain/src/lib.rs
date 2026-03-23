@@ -1,4 +1,4 @@
 pub mod common;
+pub mod outbound;
 pub mod routine;
-pub mod routine_repository;
 pub mod workout;
