@@ -42,19 +42,6 @@ impl Routine {
         self.created_at
     }
 
-    pub fn with_name(mut self, name: RoutineName) -> Self {
-        self.name = name;
-        self
-    }
-
-    pub fn set_name(&mut self, name: RoutineName) {
-        self.name = name;
-    }
-
-    pub fn add_exercise(&mut self, exercise: Exercise) {
-        self.exercises.push(exercise);
-    }
-
     pub fn get_exercise(&self, exercise_index: usize) -> Option<&Exercise> {
         self.exercises.get(exercise_index)
     }
@@ -67,7 +54,17 @@ impl Routine {
         self.exercises.len()
     }
 
-    pub fn update_set_target_reps(
+    // Setters
+
+    fn set_name(&mut self, name: RoutineName) {
+        self.name = name;
+    }
+
+    fn add_exercise(&mut self, exercise: Exercise) {
+        self.exercises.push(exercise);
+    }
+
+    fn update_set_target_reps(
         &mut self,
         exercise_index: usize,
         set_index: usize,
@@ -79,7 +76,7 @@ impl Routine {
             .ok_or("Exercise index out of bounds".to_string())?
     }
 
-    pub fn add_set_to_exercise(&mut self, exercise_id: Uuid, reps: u8) -> Result<(), String> {
+    fn add_set_to_exercise(&mut self, exercise_id: Uuid, reps: u8) -> Result<(), String> {
         self.exercises
             .iter_mut()
             .find(|exercise| exercise.id() == exercise_id)
