@@ -1,6 +1,8 @@
-use domain::{
-    outbound::memory_routine_repository::MemoryRoutineRepository,
-    routine::{CreateRoutineRequest, RoutineName, ports::RoutineService, service::Service},
+use domain::routine::{
+    memory_routine_repository::MemoryRoutineRepository,
+    models::root::{CreateRoutineRequest, RoutineName},
+    ports::RoutineService,
+    service::Service,
 };
 
 #[tokio::test]

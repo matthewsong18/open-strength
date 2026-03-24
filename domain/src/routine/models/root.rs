@@ -1,7 +1,7 @@
-use std::fmt::{Display, Formatter};
+use super::exercise::Exercise;
 
-use crate::common::Exercise;
 use chrono::{DateTime, Utc};
+use std::fmt::{Display, Formatter};
 use thiserror::Error;
 use uuid::Uuid;
 

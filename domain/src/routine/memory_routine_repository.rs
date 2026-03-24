@@ -1,6 +1,7 @@
-use crate::common::Exercise;
-use crate::routine::ports::RoutineRepository;
-use crate::routine::{CreateRoutineError, Routine, RoutineName};
+use super::models::exercise::Exercise;
+use super::models::root::{CreateRoutineError, CreateRoutineRequest, Routine, RoutineName};
+use super::ports::RoutineRepository;
+
 use chrono::{DateTime, Utc};
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
@@ -38,7 +39,7 @@ impl RoutineRepository for MemoryRoutineRepository {
 
     async fn create_routine(
         &self,
-        req: &crate::routine::CreateRoutineRequest,
+        req: &CreateRoutineRequest,
     ) -> Result<Routine, CreateRoutineError> {
         let mut storage = self
             .routine_storage

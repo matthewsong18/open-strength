@@ -1,6 +1,7 @@
-use domain::{
-    outbound::memory_routine_repository::MemoryRoutineRepository,
-    routine::{CreateRoutineRequest, RoutineName, ports::RoutineRepository},
+use domain::routine::{
+    memory_routine_repository::MemoryRoutineRepository,
+    models::root::{CreateRoutineRequest, RoutineName},
+    ports::RoutineRepository,
 };
 
 macro_rules! generate_storage_tests {

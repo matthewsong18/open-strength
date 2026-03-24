@@ -1,7 +1,5 @@
-use crate::routine::ports::{RoutineRepository, RoutineService};
-
-use super::Routine;
-use super::model::{CreateRoutineError, CreateRoutineRequest};
+use super::models::root::{CreateRoutineError, CreateRoutineRequest, Routine};
+use super::ports::{RoutineRepository, RoutineService};
 
 #[derive(Debug, Clone)]
 pub struct Service<R: RoutineRepository> {

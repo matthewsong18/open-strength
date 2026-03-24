@@ -1,5 +1,5 @@
-use super::Routine;
-use super::model::{CreateRoutineError, CreateRoutineRequest};
+use super::models::root::{CreateRoutineError, CreateRoutineRequest, Routine};
+
 use uuid::Uuid;
 
 pub trait RoutineService: Clone + Send + Sync + 'static {
