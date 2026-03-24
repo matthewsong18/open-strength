@@ -79,7 +79,7 @@ impl Routine {
     fn add_set_to_exercise(&mut self, exercise_id: Uuid, reps: u8) -> Result<(), String> {
         self.exercises
             .iter_mut()
-            .find(|exercise| exercise.id() == exercise_id)
+            .find(|exercise| *exercise.id() == exercise_id)
             .map(|exercise| {
                 exercise.add_set(reps);
             })
