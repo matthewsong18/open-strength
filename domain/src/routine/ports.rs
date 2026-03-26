@@ -18,8 +18,11 @@ pub trait RoutineService: Clone + Send + Sync + 'static {
 }
 
 pub trait RoutineRepository: Clone + Send + Sync + 'static {
-    fn get_all(&self) -> impl Future<Output = Result<Vec<Routine>, String>> + Send;
-    fn get_by_id(&self, id: Uuid) -> impl Future<Output = Result<Option<Routine>, String>> + Send;
+    fn get_all(&self) -> impl Future<Output = Result<Vec<Routine>, RoutineRepositoryError>> + Send;
+    fn get_by_id(
+        &self,
+        id: Uuid,
+    ) -> impl Future<Output = Result<Option<Routine>, RoutineRepositoryError>> + Send;
     fn create_routine(
         &self,
         req: &CreateRoutineRequest,

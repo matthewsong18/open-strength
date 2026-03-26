@@ -26,13 +26,19 @@ impl Default for MemoryRoutineRepository {
 }
 
 impl RoutineRepository for MemoryRoutineRepository {
-    async fn get_all(&self) -> Result<Vec<Routine>, String> {
-        let storage = self.routine_storage.lock().map_err(|_| "Lock poisoned")?;
+    async fn get_all(&self) -> Result<Vec<Routine>, RoutineRepositoryError> {
+        let storage = self
+            .routine_storage
+            .lock()
+            .map_err(|_| RoutineRepositoryError::Internal("Lock poisoned".to_string()))?;
         Ok(storage.clone())
     }
 
-    async fn get_by_id(&self, id: Uuid) -> Result<Option<Routine>, String> {
-        let storage = self.routine_storage.lock().map_err(|_| "Lock poisoned")?;
+    async fn get_by_id(&self, id: Uuid) -> Result<Option<Routine>, RoutineRepositoryError> {
+        let storage = self
+            .routine_storage
+            .lock()
+            .map_err(|_| RoutineRepositoryError::Internal("Lock poisoned".to_string()))?;
         let routine: Option<Routine> = storage.iter().find(|routine| *routine.id() == id).cloned();
         Ok(routine)
     }
