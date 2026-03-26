@@ -1,23 +1,50 @@
 use domain::routine::{
     memory_routine_repository::MemoryRoutineRepository,
-    models::root::{CreateRoutineRequest, RoutineName},
+    models::root::{CreateRoutineRequest, RenameRoutineRequest, RoutineName},
     ports::RoutineService,
     service::Service,
 };
 
-#[tokio::test]
-async fn test_create_empty_routine() {
+fn get_test_service() -> Service<MemoryRoutineRepository> {
     let repo: MemoryRoutineRepository = MemoryRoutineRepository::new();
-    let service: Service<MemoryRoutineRepository> = Service::new(repo);
-
-    let routine_name: RoutineName = RoutineName::new("Push Day").unwrap();
-    let request: CreateRoutineRequest = CreateRoutineRequest::new(routine_name);
-
-    let _ = service.create_routine(&request).await.unwrap();
+    Service::new(repo)
 }
 
-// mod common;
-// use domain::{common::Exercise, routine::Routine};
+#[tokio::test]
+async fn test_create_empty_routine() {
+    let service = get_test_service();
+    let routine_name: RoutineName =
+        RoutineName::new("Push Day").unwrap_or_else(|e| panic!("{}", e));
+    let request: CreateRoutineRequest = CreateRoutineRequest::new(routine_name.clone());
+
+    let test_routine = service
+        .create_routine(&request)
+        .await
+        .unwrap_or_else(|e| panic!("{}", e));
+
+    assert_eq!(routine_name, *test_routine.name());
+}
+
+#[tokio::test]
+async fn test_rename_routine() {
+    let service = get_test_service();
+
+    let routine_name = RoutineName::new("Chest Day").unwrap_or_else(|e| panic!("{}", e));
+    let test_routine_request = CreateRoutineRequest::new(routine_name);
+    let test_routine = service
+        .create_routine(&test_routine_request)
+        .await
+        .unwrap_or_else(|e| panic!("{}", e));
+
+    let new_routine_name = RoutineName::new("Push Day").unwrap_or_else(|e| panic!("{}", e));
+    let request = RenameRoutineRequest::new(new_routine_name.clone(), *test_routine.id());
+    let updated_routine = service
+        .rename_routine(&request)
+        .await
+        .unwrap_or_else(|e| panic!("{}", e));
+
+    assert_eq!(new_routine_name, *updated_routine.name());
+}
 
 // #[test]
 // fn test_init_routine() {

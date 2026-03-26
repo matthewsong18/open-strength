@@ -56,7 +56,7 @@ impl Routine {
 
     // Setters
 
-    fn set_name(&mut self, name: RoutineName) {
+    pub(crate) fn set_name(&mut self, name: RoutineName) {
         self.name = name;
     }
 
@@ -130,6 +130,41 @@ impl CreateRoutineRequest {
 pub enum CreateRoutineError {
     #[error("routine with name {name} already exists")]
     Duplicate { name: RoutineName },
+    #[error(transparent)]
+    Unknown(#[from] anyhow::Error),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct RenameRoutineRequest {
+    new_name: RoutineName,
+    target_id: Uuid,
+}
+
+impl RenameRoutineRequest {
+    pub fn new(new_name: RoutineName, target_id: Uuid) -> Self {
+        Self {
+            new_name,
+            target_id,
+        }
+    }
+
+    pub fn new_name(&self) -> &RoutineName {
+        &self.new_name
+    }
+
+    pub fn target_id(&self) -> &uuid::Uuid {
+        &self.target_id
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum RenameRoutineError {
+    #[error("routine with id {0} could not be found")]
+    NotFound(Uuid),
+
+    #[error("routine with name {name} already exists")]
+    Duplicate { name: RoutineName },
+
     #[error(transparent)]
     Unknown(#[from] anyhow::Error),
 }

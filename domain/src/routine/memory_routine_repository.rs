@@ -1,6 +1,6 @@
 use super::models::exercise::Exercise;
 use super::models::root::{CreateRoutineError, CreateRoutineRequest, Routine, RoutineName};
-use super::ports::RoutineRepository;
+use super::ports::{RoutineRepository, RoutineRepositoryError};
 
 use chrono::{DateTime, Utc};
 use std::sync::{Arc, Mutex};
@@ -52,5 +52,20 @@ impl RoutineRepository for MemoryRoutineRepository {
         let routine: Routine = Routine::new(id, name, created_at, exercises);
         storage.push(routine.clone());
         Ok(routine)
+    }
+
+    async fn save(&self, routine: &Routine) -> Result<(), RoutineRepositoryError> {
+        let mut storage = self
+            .routine_storage
+            .lock()
+            .map_err(|_| RoutineRepositoryError::Internal("Lock poisoned".to_string()))?;
+
+        if let Some(existing_routine) = storage.iter_mut().find(|r| r.id() == routine.id()) {
+            *existing_routine = routine.clone();
+        } else {
+            storage.push(routine.clone());
+        }
+
+        Ok(())
     }
 }
