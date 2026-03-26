@@ -23,10 +23,6 @@ pub trait RoutineRepository: Clone + Send + Sync + 'static {
         &self,
         id: Uuid,
     ) -> impl Future<Output = Result<Option<Routine>, RoutineRepositoryError>> + Send;
-    fn create_routine(
-        &self,
-        req: &CreateRoutineRequest,
-    ) -> impl Future<Output = Result<Routine, CreateRoutineError>> + Send;
     fn save(
         &self,
         routine: &Routine,

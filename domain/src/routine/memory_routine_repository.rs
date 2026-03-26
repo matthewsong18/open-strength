@@ -1,10 +1,8 @@
-use super::models::exercise::Exercise;
-use super::models::root::{CreateRoutineError, CreateRoutineRequest, Routine, RoutineName};
-use super::ports::{RoutineRepository, RoutineRepositoryError};
-
-use chrono::{DateTime, Utc};
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
+
+use super::models::root::Routine;
+use super::ports::{RoutineRepository, RoutineRepositoryError};
 
 #[derive(Debug, Clone)]
 pub struct MemoryRoutineRepository {
@@ -40,23 +38,6 @@ impl RoutineRepository for MemoryRoutineRepository {
             .lock()
             .map_err(|_| RoutineRepositoryError::Internal("Lock poisoned".to_string()))?;
         let routine: Option<Routine> = storage.iter().find(|routine| *routine.id() == id).cloned();
-        Ok(routine)
-    }
-
-    async fn create_routine(
-        &self,
-        req: &CreateRoutineRequest,
-    ) -> Result<Routine, CreateRoutineError> {
-        let mut storage = self
-            .routine_storage
-            .lock()
-            .map_err(|_| anyhow::anyhow!("Lock poisoned"))?;
-        let id: Uuid = Uuid::now_v7();
-        let name: RoutineName = req.name().clone();
-        let created_at: DateTime<Utc> = Utc::now();
-        let exercises: Vec<Exercise> = Vec::new();
-        let routine: Routine = Routine::new(id, name, created_at, exercises);
-        storage.push(routine.clone());
         Ok(routine)
     }
 
