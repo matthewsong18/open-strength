@@ -60,7 +60,7 @@ impl Routine {
         self.name = name;
     }
 
-    fn add_exercise(&mut self, exercise: Exercise) {
+    pub(crate) fn add_exercise(&mut self, exercise: Exercise) {
         self.exercises.push(exercise);
     }
 
@@ -165,6 +165,43 @@ pub enum RenameRoutineError {
     #[error("routine with name {name} already exists")]
     Duplicate { name: RoutineName },
 
+    #[error(transparent)]
+    Unknown(#[from] anyhow::Error),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct AddExerciseToRoutineRequest {
+    target_id: Uuid,
+    number_of_sets: Option<u8>,
+    number_of_reps: Option<u8>,
+}
+
+impl AddExerciseToRoutineRequest {
+    pub fn new(target_id: Uuid, number_of_sets: Option<u8>, number_of_reps: Option<u8>) -> Self {
+        Self {
+            target_id,
+            number_of_sets,
+            number_of_reps,
+        }
+    }
+
+    pub fn target_id(&self) -> &uuid::Uuid {
+        &self.target_id
+    }
+
+    pub fn number_of_sets(&self) -> &Option<u8> {
+        &self.number_of_sets
+    }
+
+    pub fn number_of_reps(&self) -> &Option<u8> {
+        &self.number_of_reps
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum AddExerciseToRoutineError {
+    #[error("routine with id {0} could not be found")]
+    NotFound(Uuid),
     #[error(transparent)]
     Unknown(#[from] anyhow::Error),
 }

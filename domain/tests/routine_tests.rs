@@ -1,6 +1,8 @@
 use domain::routine::{
     memory_routine_repository::MemoryRoutineRepository,
-    models::root::{CreateRoutineRequest, RenameRoutineRequest, RoutineName},
+    models::root::{
+        AddExerciseToRoutineRequest, CreateRoutineRequest, RenameRoutineRequest, RoutineName,
+    },
     ports::RoutineService,
     service::Service,
 };
@@ -44,6 +46,24 @@ async fn test_rename_routine() {
         .unwrap_or_else(|e| panic!("{}", e));
 
     assert_eq!(new_routine_name, *updated_routine.name());
+}
+
+#[tokio::test]
+async fn test_add_valid_exercise() {
+    let service = get_test_service();
+
+    let routine_name = RoutineName::new("Chest Day").unwrap_or_else(|e| panic!("{}", e));
+    let test_routine_request = CreateRoutineRequest::new(routine_name);
+    let test_routine = service
+        .create_routine(&test_routine_request)
+        .await
+        .unwrap_or_else(|e| panic!("{}", e));
+
+    let id = *test_routine.id();
+    let add_exercise_request = AddExerciseToRoutineRequest::new(id, None, None);
+    let result_routine = service.add_exercise(&add_exercise_request).await.unwrap();
+
+    assert_eq!(result_routine.exercise_count(), 1);
 }
 
 // #[test]

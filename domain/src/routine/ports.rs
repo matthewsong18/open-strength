@@ -1,5 +1,6 @@
 use super::models::root::{
-    CreateRoutineError, CreateRoutineRequest, RenameRoutineError, RenameRoutineRequest, Routine,
+    AddExerciseToRoutineError, AddExerciseToRoutineRequest, CreateRoutineError,
+    CreateRoutineRequest, RenameRoutineError, RenameRoutineRequest, Routine,
 };
 
 use thiserror::Error;
@@ -15,6 +16,11 @@ pub trait RoutineService: Clone + Send + Sync + 'static {
         &self,
         req: &RenameRoutineRequest,
     ) -> impl Future<Output = Result<Routine, RenameRoutineError>> + Send;
+
+    fn add_exercise(
+        &self,
+        req: &AddExerciseToRoutineRequest,
+    ) -> impl Future<Output = Result<Routine, AddExerciseToRoutineError>> + Send;
 }
 
 pub trait RoutineRepository: Clone + Send + Sync + 'static {

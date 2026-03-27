@@ -14,7 +14,7 @@ pub struct Exercise {
 }
 
 impl Exercise {
-    fn new(name: ExerciseName, equipment: Option<EquipmentName>) -> Self {
+    pub(crate) fn new(name: ExerciseName, equipment: Option<EquipmentName>) -> Self {
         Self {
             name,
             equipment,
@@ -42,26 +42,26 @@ impl Exercise {
 
     // Setters
 
-    pub fn set_name(&mut self, new_name: ExerciseName) {
+    pub(crate) fn set_name(&mut self, new_name: ExerciseName) {
         self.name = new_name
     }
 
-    pub fn set_equipment(&mut self, new_equipment: EquipmentName) {
+    pub(crate) fn set_equipment(&mut self, new_equipment: EquipmentName) {
         self.equipment = Some(new_equipment)
     }
 
-    pub fn add_set(&mut self, reps: u8) {
+    pub(crate) fn add_set(&mut self, reps: u8) {
         self.sets.push(Set::new(reps));
     }
 
-    pub fn with_sets(mut self, sets: u8, reps: u8) -> Self {
+    pub(crate) fn with_sets(mut self, sets: u8, reps: u8) -> Self {
         for _ in 0..sets {
             self.add_set(reps);
         }
         self
     }
 
-    pub fn update_set_reps(&mut self, set_index: usize, new_reps: u8) -> Result<(), String> {
+    pub(crate) fn update_set_reps(&mut self, set_index: usize, new_reps: u8) -> Result<(), String> {
         let set = self
             .sets
             .get_mut(set_index)
