@@ -16,7 +16,16 @@ pub struct Routine {
 }
 
 impl Routine {
-    pub fn new(
+    pub fn new(name: RoutineName) -> Self {
+        Self {
+            id: Uuid::now_v7(),
+            name,
+            created_at: Utc::now(),
+            exercises: Vec::<Exercise>::new(),
+        }
+    }
+
+    pub fn rebuild(
         id: Uuid,
         name: RoutineName,
         created_at: DateTime<Utc>,
@@ -38,8 +47,8 @@ impl Routine {
         &self.name
     }
 
-    pub fn created_at(&self) -> DateTime<Utc> {
-        self.created_at
+    pub fn created_at(&self) -> &DateTime<Utc> {
+        &self.created_at
     }
 
     pub fn get_exercise(&self, exercise_index: usize) -> Option<&Exercise> {
@@ -64,27 +73,40 @@ impl Routine {
         self.exercises.push(exercise);
     }
 
-    fn update_set_target_reps(
+    pub(crate) fn update_set_target_reps(
         &mut self,
         exercise_index: usize,
         set_index: usize,
         new_reps: u8,
-    ) -> Result<(), String> {
+    ) -> Result<(), RoutineError> {
         self.exercises
             .get_mut(exercise_index)
             .map(|exercise| exercise.update_set_reps(set_index, new_reps))
-            .ok_or("Exercise index out of bounds".to_string())?
+            .ok_or(RoutineError::SetOutOfBounds(set_index))?
     }
 
-    fn add_set_to_exercise(&mut self, exercise_id: Uuid, reps: u8) -> Result<(), String> {
+    pub(crate) fn add_set_to_exercise(
+        &mut self,
+        exercise_id: Uuid,
+        reps: u8,
+    ) -> Result<(), RoutineError> {
         self.exercises
             .iter_mut()
             .find(|exercise| *exercise.id() == exercise_id)
             .map(|exercise| {
                 exercise.add_set(reps);
             })
-            .ok_or_else(|| format!("Exercise with ID {} not found", exercise_id))
+            .ok_or(RoutineError::ExerciseNotFound(exercise_id))
     }
+}
+
+#[derive(Debug, Error)]
+pub enum RoutineError {
+    #[error("exercise with id {0} not found in this routine")]
+    ExerciseNotFound(Uuid),
+
+    #[error("set index {0} is out of bounds for the exercise")]
+    SetOutOfBounds(usize),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -105,60 +127,56 @@ impl RoutineName {
     }
 }
 
+impl TryFrom<String> for RoutineName {
+    type Error = RoutineNameEmptyError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        RoutineName::new(&value)
+    }
+}
+
+impl TryFrom<&str> for RoutineName {
+    type Error = RoutineNameEmptyError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        RoutineName::new(value)
+    }
+}
+
 impl Display for RoutineName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.0)
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct CreateRoutineRequest {
-    name: RoutineName,
-}
-
-impl CreateRoutineRequest {
-    pub fn new(name: RoutineName) -> Self {
-        Self { name }
-    }
-
-    pub fn name(&self) -> &RoutineName {
-        &self.name
-    }
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CreateRoutineCommand {
+    pub name: String,
 }
 
 #[derive(Debug, Error)]
 pub enum CreateRoutineError {
-    #[error("routine with name {name} already exists")]
-    Duplicate { name: RoutineName },
+    #[error(transparent)]
+    Validation(#[from] RoutineNameEmptyError),
+
+    #[error("routine with name {0} already exists")]
+    Duplicate(RoutineName),
+
     #[error(transparent)]
     Unknown(#[from] anyhow::Error),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct RenameRoutineRequest {
-    new_name: RoutineName,
-    target_id: Uuid,
-}
-
-impl RenameRoutineRequest {
-    pub fn new(new_name: RoutineName, target_id: Uuid) -> Self {
-        Self {
-            new_name,
-            target_id,
-        }
-    }
-
-    pub fn new_name(&self) -> &RoutineName {
-        &self.new_name
-    }
-
-    pub fn target_id(&self) -> &uuid::Uuid {
-        &self.target_id
-    }
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RenameRoutineCommand {
+    pub new_name: String,
+    pub target_id: Uuid,
 }
 
 #[derive(Debug, Error)]
 pub enum RenameRoutineError {
+    #[error(transparent)]
+    Validation(#[from] RoutineNameEmptyError),
+
     #[error("routine with id {0} could not be found")]
     NotFound(Uuid),
 
@@ -169,33 +187,11 @@ pub enum RenameRoutineError {
     Unknown(#[from] anyhow::Error),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct AddExerciseToRoutineRequest {
-    target_id: Uuid,
-    number_of_sets: Option<u8>,
-    number_of_reps: Option<u8>,
-}
-
-impl AddExerciseToRoutineRequest {
-    pub fn new(target_id: Uuid, number_of_sets: Option<u8>, number_of_reps: Option<u8>) -> Self {
-        Self {
-            target_id,
-            number_of_sets,
-            number_of_reps,
-        }
-    }
-
-    pub fn target_id(&self) -> &uuid::Uuid {
-        &self.target_id
-    }
-
-    pub fn number_of_sets(&self) -> &Option<u8> {
-        &self.number_of_sets
-    }
-
-    pub fn number_of_reps(&self) -> &Option<u8> {
-        &self.number_of_reps
-    }
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct AddExerciseToRoutineCommand {
+    pub target_id: Uuid,
+    pub number_of_sets: Option<u8>,
+    pub number_of_reps: Option<u8>,
 }
 
 #[derive(Debug, Error)]

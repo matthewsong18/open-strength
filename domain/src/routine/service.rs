@@ -1,6 +1,4 @@
 use anyhow::anyhow;
-use chrono::{DateTime, Utc};
-use uuid::Uuid;
 
 use crate::routine::models::exercise::{EquipmentName, ExerciseName};
 
@@ -8,8 +6,8 @@ use super::{
     models::{
         exercise::Exercise,
         root::{
-            AddExerciseToRoutineError, AddExerciseToRoutineRequest, CreateRoutineError,
-            CreateRoutineRequest, RenameRoutineError, RenameRoutineRequest, Routine, RoutineName,
+            AddExerciseToRoutineCommand, AddExerciseToRoutineError, CreateRoutineCommand,
+            CreateRoutineError, RenameRoutineCommand, RenameRoutineError, Routine, RoutineName,
         },
     },
     ports::{RoutineRepository, RoutineService},
@@ -35,13 +33,12 @@ where
 {
     async fn create_routine(
         &self,
-        req: &CreateRoutineRequest,
+        cmd: &CreateRoutineCommand,
     ) -> Result<Routine, CreateRoutineError> {
-        let id: Uuid = Uuid::now_v7();
-        let name: RoutineName = req.name().clone();
-        let created_at: DateTime<Utc> = Utc::now();
-        let exercises: Vec<Exercise> = Vec::new();
-        let routine: Routine = Routine::new(id, name, created_at, exercises);
+        let routine_name = RoutineName::try_from(cmd.name.clone())?;
+
+        let routine: Routine = Routine::new(routine_name);
+
         match self.repo.save(&routine).await {
             Ok(_) => Ok(routine),
             Err(err) => Err(CreateRoutineError::Unknown(anyhow!(err))),
@@ -50,38 +47,39 @@ where
 
     async fn rename_routine(
         &self,
-        req: &RenameRoutineRequest,
+        cmd: &RenameRoutineCommand,
     ) -> Result<Routine, RenameRoutineError> {
         let mut routine = self
             .repo
-            .get_by_id(*req.target_id())
+            .get_by_id(cmd.target_id)
             .await
             .map_err(|e| RenameRoutineError::Unknown(anyhow!(e)))?
-            .ok_or_else(|| RenameRoutineError::NotFound(*req.target_id()))?;
+            .ok_or_else(|| RenameRoutineError::NotFound(cmd.target_id))?;
 
-        routine.set_name(req.new_name().clone());
+        let routine_name = RoutineName::try_from(cmd.new_name.clone())?;
+        routine.set_name(routine_name);
 
         Ok(routine)
     }
 
     async fn add_exercise(
         &self,
-        req: &AddExerciseToRoutineRequest,
+        cmd: &AddExerciseToRoutineCommand,
     ) -> Result<Routine, AddExerciseToRoutineError> {
         let mut routine = self
             .repo
-            .get_by_id(*req.target_id())
+            .get_by_id(cmd.target_id)
             .await
             .map_err(|e| AddExerciseToRoutineError::Unknown(anyhow!(e)))?
-            .ok_or_else(|| AddExerciseToRoutineError::NotFound(*req.target_id()))?;
+            .ok_or_else(|| AddExerciseToRoutineError::NotFound(cmd.target_id))?;
 
         let exercise_name: ExerciseName = ExerciseName::new("Chest Press")
             .map_err(|e| AddExerciseToRoutineError::Unknown(anyhow!(e)))?;
         let equipment_name: EquipmentName = EquipmentName::new("Bench Press")
             .map_err(|e| AddExerciseToRoutineError::Unknown(anyhow!(e)))?;
 
-        let sets = req.number_of_sets().unwrap_or(3u8);
-        let reps = req.number_of_reps().unwrap_or(10u8);
+        let sets = cmd.number_of_sets.unwrap_or(3u8);
+        let reps = cmd.number_of_reps.unwrap_or(10u8);
 
         let exercise = Exercise::new(exercise_name, Some(equipment_name)).with_sets(sets, reps);
 

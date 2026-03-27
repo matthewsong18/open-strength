@@ -1,3 +1,5 @@
+use crate::routine::models::root::RoutineError;
+
 use super::set::Set;
 
 use std::fmt::{Display, Formatter};
@@ -61,11 +63,15 @@ impl Exercise {
         self
     }
 
-    pub(crate) fn update_set_reps(&mut self, set_index: usize, new_reps: u8) -> Result<(), String> {
+    pub(crate) fn update_set_reps(
+        &mut self,
+        set_index: usize,
+        new_reps: u8,
+    ) -> Result<(), RoutineError> {
         let set = self
             .sets
             .get_mut(set_index)
-            .ok_or("Set index out of bounds".to_string())?;
+            .ok_or(RoutineError::SetOutOfBounds(set_index))?;
 
         set.set_reps(new_reps);
 

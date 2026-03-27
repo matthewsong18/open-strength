@@ -1,8 +1,6 @@
 use domain::routine::{
     memory_routine_repository::MemoryRoutineRepository,
-    models::root::{
-        AddExerciseToRoutineRequest, CreateRoutineRequest, RenameRoutineRequest, RoutineName,
-    },
+    models::root::{AddExerciseToRoutineCommand, CreateRoutineCommand, RenameRoutineCommand},
     ports::RoutineService,
     service::Service,
 };
@@ -15,52 +13,55 @@ fn get_test_service() -> Service<MemoryRoutineRepository> {
 #[tokio::test]
 async fn test_create_empty_routine() {
     let service = get_test_service();
-    let routine_name: RoutineName =
-        RoutineName::new("Push Day").unwrap_or_else(|e| panic!("{}", e));
-    let request: CreateRoutineRequest = CreateRoutineRequest::new(routine_name.clone());
+    let routine_name = "Push Day".to_string();
+    let request: CreateRoutineCommand = CreateRoutineCommand {
+        name: routine_name.clone(),
+    };
 
-    let test_routine = service
-        .create_routine(&request)
-        .await
-        .unwrap_or_else(|e| panic!("{}", e));
+    let test_routine = service.create_routine(&request).await.unwrap();
 
-    assert_eq!(routine_name, *test_routine.name());
+    assert_eq!(routine_name, *test_routine.name().to_string());
 }
 
 #[tokio::test]
 async fn test_rename_routine() {
     let service = get_test_service();
 
-    let routine_name = RoutineName::new("Chest Day").unwrap_or_else(|e| panic!("{}", e));
-    let test_routine_request = CreateRoutineRequest::new(routine_name);
-    let test_routine = service
-        .create_routine(&test_routine_request)
-        .await
-        .unwrap_or_else(|e| panic!("{}", e));
+    let routine_name = "Chest Day".to_string();
+    let test_routine_request = CreateRoutineCommand {
+        name: routine_name.clone(),
+    };
+    let test_routine = service.create_routine(&test_routine_request).await.unwrap();
 
-    let new_routine_name = RoutineName::new("Push Day").unwrap_or_else(|e| panic!("{}", e));
-    let request = RenameRoutineRequest::new(new_routine_name.clone(), *test_routine.id());
+    let new_routine_name = "Push Day".to_string();
+    let request = RenameRoutineCommand {
+        new_name: new_routine_name.clone(),
+        target_id: *test_routine.id(),
+    };
     let updated_routine = service
         .rename_routine(&request)
         .await
         .unwrap_or_else(|e| panic!("{}", e));
 
-    assert_eq!(new_routine_name, *updated_routine.name());
+    assert_eq!(new_routine_name, updated_routine.name().to_string());
 }
 
 #[tokio::test]
 async fn test_add_valid_exercise() {
     let service = get_test_service();
 
-    let routine_name = RoutineName::new("Chest Day").unwrap_or_else(|e| panic!("{}", e));
-    let test_routine_request = CreateRoutineRequest::new(routine_name);
-    let test_routine = service
-        .create_routine(&test_routine_request)
-        .await
-        .unwrap_or_else(|e| panic!("{}", e));
+    let routine_name = "Chest Day".to_string();
+    let test_routine_request = CreateRoutineCommand {
+        name: routine_name.clone(),
+    };
+    let test_routine = service.create_routine(&test_routine_request).await.unwrap();
 
     let id = *test_routine.id();
-    let add_exercise_request = AddExerciseToRoutineRequest::new(id, None, None);
+    let add_exercise_request = AddExerciseToRoutineCommand {
+        target_id: id,
+        number_of_sets: None,
+        number_of_reps: None,
+    };
     let result_routine = service.add_exercise(&add_exercise_request).await.unwrap();
 
     assert_eq!(result_routine.exercise_count(), 1);

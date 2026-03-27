@@ -1,6 +1,6 @@
 use super::models::root::{
-    AddExerciseToRoutineError, AddExerciseToRoutineRequest, CreateRoutineError,
-    CreateRoutineRequest, RenameRoutineError, RenameRoutineRequest, Routine,
+    AddExerciseToRoutineCommand, AddExerciseToRoutineError, CreateRoutineCommand,
+    CreateRoutineError, RenameRoutineCommand, RenameRoutineError, Routine,
 };
 
 use thiserror::Error;
@@ -9,17 +9,17 @@ use uuid::Uuid;
 pub trait RoutineService: Clone + Send + Sync + 'static {
     fn create_routine(
         &self,
-        req: &CreateRoutineRequest,
+        req: &CreateRoutineCommand,
     ) -> impl Future<Output = Result<Routine, CreateRoutineError>> + Send;
 
     fn rename_routine(
         &self,
-        req: &RenameRoutineRequest,
+        req: &RenameRoutineCommand,
     ) -> impl Future<Output = Result<Routine, RenameRoutineError>> + Send;
 
     fn add_exercise(
         &self,
-        req: &AddExerciseToRoutineRequest,
+        req: &AddExerciseToRoutineCommand,
     ) -> impl Future<Output = Result<Routine, AddExerciseToRoutineError>> + Send;
 }
 
