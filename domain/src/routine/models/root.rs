@@ -180,8 +180,8 @@ pub enum RenameRoutineError {
     #[error("routine with id {0} could not be found")]
     NotFound(Uuid),
 
-    #[error("routine with name {name} already exists")]
-    Duplicate { name: RoutineName },
+    #[error("routine with name {0} already exists")]
+    Duplicate(RoutineName),
 
     #[error(transparent)]
     Unknown(#[from] anyhow::Error),

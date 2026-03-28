@@ -1,6 +1,9 @@
 use domain::routine::{
     memory_routine_repository::MemoryRoutineRepository,
-    models::root::{AddExerciseToRoutineCommand, CreateRoutineCommand, RenameRoutineCommand},
+    models::root::{
+        AddExerciseToRoutineCommand, CreateRoutineCommand, CreateRoutineError,
+        RenameRoutineCommand, RenameRoutineError,
+    },
     ports::RoutineService,
     service::Service,
 };
@@ -65,6 +68,57 @@ async fn test_add_valid_exercise() {
     let result_routine = service.add_exercise(&add_exercise_request).await.unwrap();
 
     assert_eq!(result_routine.exercise_count(), 1);
+}
+
+#[tokio::test]
+async fn test_create_duplicate_routine_returns_error() {
+    let service = get_test_service();
+
+    let request = CreateRoutineCommand {
+        name: "Original".to_string(),
+    };
+
+    // create the initial routine successfully
+    service.create_routine(&request).await.unwrap();
+
+    // attempt to create the duplicate and extract the error
+    let err = service.create_routine(&request).await.unwrap_err();
+
+    assert!(
+        matches!(err, CreateRoutineError::Duplicate { .. }),
+        "Expected Duplicate error, but got: {:?}",
+        err
+    );
+}
+
+#[tokio::test]
+async fn test_rename_to_duplicate_routine_returns_error() {
+    let service = get_test_service();
+
+    // setup
+    let original_request = CreateRoutineCommand {
+        name: "Original".to_string(),
+    };
+    service.create_routine(&original_request).await.unwrap();
+
+    let new_request = CreateRoutineCommand {
+        name: "New".to_string(),
+    };
+    let new_routine = service.create_routine(&new_request).await.unwrap();
+
+    // attempt to rename the second routine to the first routine's name
+    let rename_request = RenameRoutineCommand {
+        new_name: "Original".to_string(),
+        target_id: *new_routine.id(),
+    };
+
+    let err = service.rename_routine(&rename_request).await.unwrap_err();
+
+    assert!(
+        matches!(err, RenameRoutineError::Duplicate { .. }),
+        "Expected Duplicate error, but got: {:?}",
+        err
+    );
 }
 
 // #[test]
