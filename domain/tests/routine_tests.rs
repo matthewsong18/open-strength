@@ -1,8 +1,8 @@
 use domain::routine::{
     memory_routine_repository::MemoryRoutineRepository,
     service::{
-        AddExerciseToRoutineCommand, CreateRoutineCommand, CreateRoutineError,
-        RenameRoutineCommand, RenameRoutineError, RoutineService,
+        self, AddExerciseToRoutineCommand, CreateRoutineCommand, CreateRoutineError,
+        RenameExerciseCommand, RenameRoutineCommand, RenameRoutineError, RoutineService,
     },
 };
 
@@ -119,6 +119,42 @@ async fn test_rename_to_duplicate_routine_returns_error() {
         "Expected Duplicate error, but got: {:?}",
         err
     );
+}
+
+#[tokio::test]
+async fn test_rename_exercise_succeeds() {
+    let service = get_test_service();
+
+    // setup
+
+    let new_routine_cmd = CreateRoutineCommand {
+        name: "Routine".to_string(),
+    };
+    let routine = service.create_routine(&new_routine_cmd).await.unwrap();
+
+    let new_exercise_cmd = AddExerciseToRoutineCommand {
+        target_id: *routine.id(),
+        exercise_name: "Exercise1".to_string(),
+        equipment_name: None,
+        number_of_sets: None,
+        number_of_reps: None,
+    };
+    let updated_routine = service.add_exercise(&new_exercise_cmd).await.unwrap();
+
+    // attempt to rename exercise
+
+    let exercise_id = *updated_routine.get_exercise(0).unwrap().id();
+    let new_name = "RenamedExercise".to_string();
+    let rename_exercise_cmd = RenameExerciseCommand {
+        routine_id: *updated_routine.id(),
+        exercise_id,
+        new_name: new_name.clone(),
+    };
+
+    let result_routine = service.rename_exercise(&rename_exercise_cmd).await.unwrap();
+    let updated_exercise_name = result_routine.get_exercise(0).unwrap().name().to_string();
+
+    assert_eq!(new_name, updated_exercise_name)
 }
 
 // #[test]

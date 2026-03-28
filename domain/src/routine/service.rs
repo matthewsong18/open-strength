@@ -92,6 +92,13 @@ where
 
         Ok(routine)
     }
+
+    pub async fn rename_exercise(
+        &self,
+        cmd: &RenameExerciseCommand,
+    ) -> Result<Routine, RenameExerciseError> {
+        todo!()
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -151,6 +158,28 @@ pub enum AddExerciseToRoutineError {
 
     #[error("routine with id {0} could not be found")]
     NotFound(Uuid),
+
+    #[error("repository error: {0}")]
+    Repository(#[from] RoutineRepositoryError),
+}
+
+#[derive(Clone, Debug)]
+pub struct RenameExerciseCommand {
+    pub routine_id: Uuid,
+    pub exercise_id: Uuid,
+    pub new_name: String,
+}
+
+#[derive(Debug, Error)]
+pub enum RenameExerciseError {
+    #[error(transparent)]
+    ExerciseValidation(#[from] ExerciseNameEmptyError),
+
+    #[error("routine with id {0} could not be found")]
+    RoutineNotFound(Uuid),
+
+    #[error("exercise with id {0} could not be found")]
+    ExerciseNotFound(Uuid),
 
     #[error("repository error: {0}")]
     Repository(#[from] RoutineRepositoryError),
