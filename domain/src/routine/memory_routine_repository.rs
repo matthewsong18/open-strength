@@ -55,4 +55,19 @@ impl RoutineRepository for MemoryRoutineRepository {
 
         Ok(())
     }
+
+    async fn exists_by_name(
+        &self,
+        name: &super::models::root::RoutineName,
+    ) -> Result<bool, RoutineRepositoryError> {
+        let mut storage = self
+            .routine_storage
+            .lock()
+            .map_err(|_| RoutineRepositoryError::Internal("Lock poisoned".to_string()))?;
+
+        match storage.iter_mut().find(|r| r.name() == name) {
+            Some(_) => Ok(true),
+            None => Ok(false),
+        }
+    }
 }

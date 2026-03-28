@@ -1,3 +1,5 @@
+use crate::routine::models::root::RoutineName;
+
 use super::models::root::{
     AddExerciseToRoutineCommand, AddExerciseToRoutineError, CreateRoutineCommand,
     CreateRoutineError, RenameRoutineCommand, RenameRoutineError, Routine,
@@ -24,6 +26,10 @@ pub trait RoutineService: Clone + Send + Sync + 'static {
 }
 
 pub trait RoutineRepository: Clone + Send + Sync + 'static {
+    fn exists_by_name(
+        &self,
+        name: &RoutineName,
+    ) -> impl Future<Output = Result<bool, RoutineRepositoryError>> + Send;
     fn get_all(&self) -> impl Future<Output = Result<Vec<Routine>, RoutineRepositoryError>> + Send;
     fn get_by_id(
         &self,
@@ -37,12 +43,6 @@ pub trait RoutineRepository: Clone + Send + Sync + 'static {
 
 #[derive(Debug, Error)]
 pub enum RoutineRepositoryError {
-    #[error("Routine with ID {0} was not found")]
-    NotFound(Uuid),
-
-    #[error("A storage conflict occurred: {0}")]
-    Conflict(String),
-
     #[error("An internal storage error occurred: {0}")]
     Internal(String),
 }

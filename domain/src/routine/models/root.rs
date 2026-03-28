@@ -1,3 +1,8 @@
+use crate::routine::{
+    models::exercise::{EquipmentNameEmptyError, ExerciseNameEmptyError},
+    ports::RoutineRepositoryError,
+};
+
 use super::exercise::Exercise;
 
 use chrono::{DateTime, Utc};
@@ -162,8 +167,8 @@ pub enum CreateRoutineError {
     #[error("routine with name {0} already exists")]
     Duplicate(RoutineName),
 
-    #[error(transparent)]
-    Unknown(#[from] anyhow::Error),
+    #[error("repository error: {0}")]
+    Repository(#[from] RoutineRepositoryError),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -183,8 +188,8 @@ pub enum RenameRoutineError {
     #[error("routine with name {0} already exists")]
     Duplicate(RoutineName),
 
-    #[error(transparent)]
-    Unknown(#[from] anyhow::Error),
+    #[error("repository error: {0}")]
+    Repository(#[from] RoutineRepositoryError),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -196,8 +201,15 @@ pub struct AddExerciseToRoutineCommand {
 
 #[derive(Debug, Error)]
 pub enum AddExerciseToRoutineError {
+    #[error(transparent)]
+    ExerciseValidation(#[from] ExerciseNameEmptyError),
+
+    #[error(transparent)]
+    EquipmentValidation(#[from] EquipmentNameEmptyError),
+
     #[error("routine with id {0} could not be found")]
     NotFound(Uuid),
-    #[error(transparent)]
-    Unknown(#[from] anyhow::Error),
+
+    #[error("repository error: {0}")]
+    Repository(#[from] RoutineRepositoryError),
 }

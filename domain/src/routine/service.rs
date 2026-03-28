@@ -1,5 +1,3 @@
-use anyhow::anyhow;
-
 use crate::routine::models::exercise::{EquipmentName, ExerciseName};
 
 use super::{
@@ -36,13 +34,17 @@ where
         cmd: &CreateRoutineCommand,
     ) -> Result<Routine, CreateRoutineError> {
         let routine_name = RoutineName::try_from(cmd.name.clone())?;
+        let routine: Routine = Routine::new(routine_name.clone());
 
-        let routine: Routine = Routine::new(routine_name);
+        let exists_by_name = self.repo.exists_by_name(&routine_name).await?;
 
-        match self.repo.save(&routine).await {
-            Ok(_) => Ok(routine),
-            Err(err) => Err(CreateRoutineError::Unknown(anyhow!(err))),
+        if exists_by_name {
+            return Err(CreateRoutineError::Duplicate(routine_name));
         }
+
+        self.repo.save(&routine).await?;
+
+        Ok(routine)
     }
 
     async fn rename_routine(
@@ -52,11 +54,16 @@ where
         let mut routine = self
             .repo
             .get_by_id(cmd.target_id)
-            .await
-            .map_err(|e| RenameRoutineError::Unknown(anyhow!(e)))?
-            .ok_or_else(|| RenameRoutineError::NotFound(cmd.target_id))?;
+            .await?
+            .ok_or(RenameRoutineError::NotFound(cmd.target_id))?;
 
         let routine_name = RoutineName::try_from(cmd.new_name.clone())?;
+        let exists_by_name = self.repo.exists_by_name(&routine_name).await?;
+
+        if exists_by_name {
+            return Err(RenameRoutineError::Duplicate(routine_name));
+        }
+
         routine.set_name(routine_name);
 
         Ok(routine)
@@ -69,14 +76,11 @@ where
         let mut routine = self
             .repo
             .get_by_id(cmd.target_id)
-            .await
-            .map_err(|e| AddExerciseToRoutineError::Unknown(anyhow!(e)))?
-            .ok_or_else(|| AddExerciseToRoutineError::NotFound(cmd.target_id))?;
+            .await?
+            .ok_or(AddExerciseToRoutineError::NotFound(cmd.target_id))?;
 
-        let exercise_name: ExerciseName = ExerciseName::new("Chest Press")
-            .map_err(|e| AddExerciseToRoutineError::Unknown(anyhow!(e)))?;
-        let equipment_name: EquipmentName = EquipmentName::new("Bench Press")
-            .map_err(|e| AddExerciseToRoutineError::Unknown(anyhow!(e)))?;
+        let exercise_name: ExerciseName = ExerciseName::new("Chest Press")?;
+        let equipment_name: EquipmentName = EquipmentName::new("Bench Press")?;
 
         let sets = cmd.number_of_sets.unwrap_or(3u8);
         let reps = cmd.number_of_reps.unwrap_or(10u8);
