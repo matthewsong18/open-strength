@@ -1,16 +1,14 @@
 use domain::routine::{
     memory_routine_repository::MemoryRoutineRepository,
-    models::root::{
+    service::{
         AddExerciseToRoutineCommand, CreateRoutineCommand, CreateRoutineError,
-        RenameRoutineCommand, RenameRoutineError,
+        RenameRoutineCommand, RenameRoutineError, RoutineService,
     },
-    ports::RoutineService,
-    service::Service,
 };
 
-fn get_test_service() -> Service<MemoryRoutineRepository> {
+fn get_test_service() -> RoutineService<MemoryRoutineRepository> {
     let repo: MemoryRoutineRepository = MemoryRoutineRepository::new();
-    Service::new(repo)
+    RoutineService::new(repo)
 }
 
 #[tokio::test]

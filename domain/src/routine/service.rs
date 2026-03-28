@@ -1,35 +1,30 @@
-use crate::routine::models::exercise::{EquipmentName, ExerciseName};
+use thiserror::Error;
+use uuid::Uuid;
 
 use super::{
     models::{
-        exercise::Exercise,
-        root::{
-            AddExerciseToRoutineCommand, AddExerciseToRoutineError, CreateRoutineCommand,
-            CreateRoutineError, RenameRoutineCommand, RenameRoutineError, Routine, RoutineName,
+        exercise::{
+            EquipmentName, EquipmentNameEmptyError, Exercise, ExerciseName, ExerciseNameEmptyError,
         },
+        root::{Routine, RoutineName, RoutineNameEmptyError},
     },
-    ports::{RoutineRepository, RoutineService},
+    ports::{RoutineRepository, RoutineRepositoryError},
 };
 
 #[derive(Debug, Clone)]
-pub struct Service<R: RoutineRepository> {
+pub struct RoutineService<R: RoutineRepository> {
     repo: R,
 }
 
-impl<R> Service<R>
+impl<R> RoutineService<R>
 where
     R: RoutineRepository,
 {
     pub fn new(repo: R) -> Self {
         Self { repo }
     }
-}
 
-impl<R> RoutineService for Service<R>
-where
-    R: RoutineRepository,
-{
-    async fn create_routine(
+    pub async fn create_routine(
         &self,
         cmd: &CreateRoutineCommand,
     ) -> Result<Routine, CreateRoutineError> {
@@ -47,7 +42,7 @@ where
         Ok(routine)
     }
 
-    async fn rename_routine(
+    pub async fn rename_routine(
         &self,
         cmd: &RenameRoutineCommand,
     ) -> Result<Routine, RenameRoutineError> {
@@ -69,7 +64,7 @@ where
         Ok(routine)
     }
 
-    async fn add_exercise(
+    pub async fn add_exercise(
         &self,
         cmd: &AddExerciseToRoutineCommand,
     ) -> Result<Routine, AddExerciseToRoutineError> {
@@ -97,4 +92,66 @@ where
 
         Ok(routine)
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CreateRoutineCommand {
+    pub name: String,
+}
+
+#[derive(Debug, Error)]
+pub enum CreateRoutineError {
+    #[error(transparent)]
+    Validation(#[from] RoutineNameEmptyError),
+
+    #[error("routine with name {0} already exists")]
+    Duplicate(RoutineName),
+
+    #[error("repository error: {0}")]
+    Repository(#[from] RoutineRepositoryError),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RenameRoutineCommand {
+    pub new_name: String,
+    pub target_id: Uuid,
+}
+
+#[derive(Debug, Error)]
+pub enum RenameRoutineError {
+    #[error(transparent)]
+    Validation(#[from] RoutineNameEmptyError),
+
+    #[error("routine with id {0} could not be found")]
+    NotFound(Uuid),
+
+    #[error("routine with name {0} already exists")]
+    Duplicate(RoutineName),
+
+    #[error("repository error: {0}")]
+    Repository(#[from] RoutineRepositoryError),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct AddExerciseToRoutineCommand {
+    pub target_id: Uuid,
+    pub exercise_name: String,
+    pub equipment_name: Option<String>,
+    pub number_of_sets: Option<u8>,
+    pub number_of_reps: Option<u8>,
+}
+
+#[derive(Debug, Error)]
+pub enum AddExerciseToRoutineError {
+    #[error(transparent)]
+    ExerciseValidation(#[from] ExerciseNameEmptyError),
+
+    #[error(transparent)]
+    EquipmentValidation(#[from] EquipmentNameEmptyError),
+
+    #[error("routine with id {0} could not be found")]
+    NotFound(Uuid),
+
+    #[error("repository error: {0}")]
+    Repository(#[from] RoutineRepositoryError),
 }

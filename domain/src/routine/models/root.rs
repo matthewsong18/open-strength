@@ -1,14 +1,9 @@
-use crate::routine::{
-    models::exercise::{EquipmentNameEmptyError, ExerciseNameEmptyError},
-    ports::RoutineRepositoryError,
-};
-
-use super::exercise::Exercise;
-
 use chrono::{DateTime, Utc};
 use std::fmt::{Display, Formatter};
 use thiserror::Error;
 use uuid::Uuid;
+
+use super::exercise::Exercise;
 
 /// The aggregate root and core of the domain is tracking repeatable workouts.
 /// As such, this contains all the information necessary for a given workout.
@@ -152,66 +147,4 @@ impl Display for RoutineName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.0)
     }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct CreateRoutineCommand {
-    pub name: String,
-}
-
-#[derive(Debug, Error)]
-pub enum CreateRoutineError {
-    #[error(transparent)]
-    Validation(#[from] RoutineNameEmptyError),
-
-    #[error("routine with name {0} already exists")]
-    Duplicate(RoutineName),
-
-    #[error("repository error: {0}")]
-    Repository(#[from] RoutineRepositoryError),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct RenameRoutineCommand {
-    pub new_name: String,
-    pub target_id: Uuid,
-}
-
-#[derive(Debug, Error)]
-pub enum RenameRoutineError {
-    #[error(transparent)]
-    Validation(#[from] RoutineNameEmptyError),
-
-    #[error("routine with id {0} could not be found")]
-    NotFound(Uuid),
-
-    #[error("routine with name {0} already exists")]
-    Duplicate(RoutineName),
-
-    #[error("repository error: {0}")]
-    Repository(#[from] RoutineRepositoryError),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct AddExerciseToRoutineCommand {
-    pub target_id: Uuid,
-    pub exercise_name: String,
-    pub equipment_name: Option<String>,
-    pub number_of_sets: Option<u8>,
-    pub number_of_reps: Option<u8>,
-}
-
-#[derive(Debug, Error)]
-pub enum AddExerciseToRoutineError {
-    #[error(transparent)]
-    ExerciseValidation(#[from] ExerciseNameEmptyError),
-
-    #[error(transparent)]
-    EquipmentValidation(#[from] EquipmentNameEmptyError),
-
-    #[error("routine with id {0} could not be found")]
-    NotFound(Uuid),
-
-    #[error("repository error: {0}")]
-    Repository(#[from] RoutineRepositoryError),
 }

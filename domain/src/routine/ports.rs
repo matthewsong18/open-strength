@@ -1,29 +1,9 @@
 use crate::routine::models::root::RoutineName;
 
-use super::models::root::{
-    AddExerciseToRoutineCommand, AddExerciseToRoutineError, CreateRoutineCommand,
-    CreateRoutineError, RenameRoutineCommand, RenameRoutineError, Routine,
-};
+use super::models::root::Routine;
 
 use thiserror::Error;
 use uuid::Uuid;
-
-pub trait RoutineService: Clone + Send + Sync + 'static {
-    fn create_routine(
-        &self,
-        req: &CreateRoutineCommand,
-    ) -> impl Future<Output = Result<Routine, CreateRoutineError>> + Send;
-
-    fn rename_routine(
-        &self,
-        req: &RenameRoutineCommand,
-    ) -> impl Future<Output = Result<Routine, RenameRoutineError>> + Send;
-
-    fn add_exercise(
-        &self,
-        req: &AddExerciseToRoutineCommand,
-    ) -> impl Future<Output = Result<Routine, AddExerciseToRoutineError>> + Send;
-}
 
 pub trait RoutineRepository: Clone + Send + Sync + 'static {
     fn exists_by_name(
