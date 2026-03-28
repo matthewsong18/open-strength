@@ -62,6 +62,8 @@ async fn test_add_valid_exercise() {
     let id = *test_routine.id();
     let add_exercise_request = AddExerciseToRoutineCommand {
         target_id: id,
+        exercise_name: "Chest Press".to_string(),
+        equipment_name: Some("Bench Press".to_string()),
         number_of_sets: None,
         number_of_reps: None,
     };

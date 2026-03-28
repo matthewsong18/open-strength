@@ -195,6 +195,8 @@ pub enum RenameRoutineError {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AddExerciseToRoutineCommand {
     pub target_id: Uuid,
+    pub exercise_name: String,
+    pub equipment_name: Option<String>,
     pub number_of_sets: Option<u8>,
     pub number_of_reps: Option<u8>,
 }

@@ -79,13 +79,19 @@ where
             .await?
             .ok_or(AddExerciseToRoutineError::NotFound(cmd.target_id))?;
 
-        let exercise_name: ExerciseName = ExerciseName::new("Chest Press")?;
-        let equipment_name: EquipmentName = EquipmentName::new("Bench Press")?;
+        let exercise_name: ExerciseName = ExerciseName::new(&cmd.exercise_name)?;
+        let equipment_name: Option<EquipmentName> = match &cmd.equipment_name {
+            Some(raw_equipment_name) => {
+                let equipment_name = EquipmentName::new(raw_equipment_name)?;
+                Some(equipment_name)
+            }
+            None => None,
+        };
 
         let sets = cmd.number_of_sets.unwrap_or(3u8);
         let reps = cmd.number_of_reps.unwrap_or(10u8);
 
-        let exercise = Exercise::new(exercise_name, Some(equipment_name)).with_sets(sets, reps);
+        let exercise = Exercise::new(exercise_name, equipment_name).with_sets(sets, reps);
 
         routine.add_exercise(exercise);
 
