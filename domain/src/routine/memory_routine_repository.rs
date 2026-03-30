@@ -37,7 +37,7 @@ impl RoutineRepository for MemoryRoutineRepository {
             .routine_storage
             .lock()
             .map_err(|_| RoutineRepositoryError::Internal("Lock poisoned".to_string()))?;
-        let routine: Option<Routine> = storage.iter().find(|routine| *routine.id() == id).cloned();
+        let routine: Option<Routine> = storage.iter().find(|routine| routine.id() == id).cloned();
         Ok(routine)
     }
 

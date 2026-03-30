@@ -24,8 +24,8 @@ impl Set {
 
     // Getters
 
-    pub fn id(&self) -> &uuid::Uuid {
-        &self.id
+    pub fn id(&self) -> Uuid {
+        self.id
     }
 
     pub fn weight(&self) -> &Option<Weight> {

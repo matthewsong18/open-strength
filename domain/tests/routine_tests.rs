@@ -42,7 +42,7 @@ async fn test_rename_routine() {
     let new_routine_name = "Push Day".to_string();
     let request = RenameRoutineCommand {
         new_name: new_routine_name.clone(),
-        target_id: *test_routine.id(),
+        target_id: test_routine.id(),
     };
     let updated_routine = service
         .rename_routine(&request)
@@ -62,7 +62,7 @@ async fn test_add_valid_exercise() {
     };
     let test_routine = service.create_routine(&test_routine_request).await.unwrap();
 
-    let id = *test_routine.id();
+    let id = test_routine.id();
     let add_exercise_request = AddExerciseToRoutineCommand::new(id, "Chest Press");
     let result_routine = service.add_exercise(&add_exercise_request).await.unwrap();
 
@@ -108,7 +108,7 @@ async fn test_rename_to_duplicate_routine_returns_error() {
     // attempt to rename the second routine to the first routine's name
     let rename_request = RenameRoutineCommand {
         new_name: "Original".to_string(),
-        target_id: *new_routine.id(),
+        target_id: new_routine.id(),
     };
 
     let err = service.rename_routine(&rename_request).await.unwrap_err();
@@ -131,7 +131,7 @@ async fn test_rename_exercise_succeeds() {
     };
     let routine = service.create_routine(&new_routine_cmd).await.unwrap();
 
-    let new_exercise_cmd = AddExerciseToRoutineCommand::new(*routine.id(), "Exercise1");
+    let new_exercise_cmd = AddExerciseToRoutineCommand::new(routine.id(), "Exercise1");
     let updated_routine = service.add_exercise(&new_exercise_cmd).await.unwrap();
 
     // attempt to rename exercise
@@ -139,7 +139,7 @@ async fn test_rename_exercise_succeeds() {
     let exercise_id = new_exercise_cmd.new_exercise_id();
     let new_name = "RenamedExercise".to_string();
     let rename_exercise_cmd =
-        RenameExerciseCommand::new(*updated_routine.id(), exercise_id, new_name.clone());
+        RenameExerciseCommand::new(updated_routine.id(), exercise_id, new_name.clone());
 
     let result_routine = service.rename_exercise(&rename_exercise_cmd).await.unwrap();
     let updated_exercise_name = result_routine
@@ -168,7 +168,7 @@ async fn test_rename_routine_persistence() {
     service
         .rename_routine(&RenameRoutineCommand {
             new_name: new_name.clone(),
-            target_id: *routine.id(),
+            target_id: routine.id(),
         })
         .await
         .unwrap();
@@ -179,7 +179,7 @@ async fn test_rename_routine_persistence() {
     let result_routine = new_service
         .rename_routine(&RenameRoutineCommand {
             new_name: "Another Name".to_string(),
-            target_id: *routine.id(),
+            target_id: routine.id(),
         })
         .await
         .unwrap();
@@ -199,13 +199,13 @@ async fn test_add_exercise_persistence() {
         .await
         .unwrap();
 
-    let add_exercise_cmd = AddExerciseToRoutineCommand::new(*routine.id(), "Bench Press");
+    let add_exercise_cmd = AddExerciseToRoutineCommand::new(routine.id(), "Bench Press");
     service.add_exercise(&add_exercise_cmd).await.unwrap();
 
     // verify persistence by attempting to rename the exercise in a fresh service
     let new_service = get_test_service_with_repo(repo);
     let rename_cmd = RenameExerciseCommand::new(
-        *routine.id(),
+        routine.id(),
         add_exercise_cmd.new_exercise_id(),
         "Incline Bench Press",
     );
@@ -228,7 +228,7 @@ async fn test_add_set_success() {
     let repo = MemoryRoutineRepository::new();
     let service = get_test_service_with_repo(repo.clone());
 
-    let routine_id = *service
+    let routine_id = service
         .create_routine(&CreateRoutineCommand {
             name: "Routine".to_string(),
         })
@@ -251,7 +251,7 @@ async fn test_add_set_success() {
         .unwrap()
         .sets()
         .iter()
-        .rfind(|s| *s.id() == expected_set_id)
+        .rfind(|s| s.id() == expected_set_id)
         .unwrap();
 }
 

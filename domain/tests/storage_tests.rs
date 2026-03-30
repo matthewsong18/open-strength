@@ -38,7 +38,7 @@ macro_rules! generate_storage_tests {
                     repo.save(&routine).await.unwrap();
 
                     let target_id = routine.id();
-                    let result_routine = repo.get_by_id(*target_id).await.unwrap().unwrap();
+                    let result_routine = repo.get_by_id(target_id).await.unwrap().unwrap();
                     assert_eq!(target_id, result_routine.id());
                 }
             }

@@ -41,8 +41,8 @@ impl Routine {
         }
     }
 
-    pub fn id(&self) -> &uuid::Uuid {
-        &self.id
+    pub fn id(&self) -> Uuid {
+        self.id
     }
 
     pub fn name(&self) -> &RoutineName {
@@ -54,7 +54,7 @@ impl Routine {
     }
 
     pub fn get_exercise(&self, exercise_id: Uuid) -> Option<&Exercise> {
-        self.exercises.iter().find(|e| *e.id() == exercise_id)
+        self.exercises.iter().find(|e| e.id() == exercise_id)
     }
 
     pub fn get_exercises(&self) -> &[Exercise] {
@@ -94,7 +94,7 @@ impl Routine {
     ) -> Result<(), RoutineError> {
         self.exercises
             .iter_mut()
-            .find(|exercise| *exercise.id() == exercise_id)
+            .find(|exercise| exercise.id() == exercise_id)
             .map(|exercise| {
                 exercise.add_set(new_set);
             })
@@ -108,7 +108,7 @@ impl Routine {
     ) -> Result<(), RoutineError> {
         self.exercises
             .iter_mut()
-            .find(|exercise| *exercise.id() == exercise_id)
+            .find(|exercise| exercise.id() == exercise_id)
             .map(|exercise| exercise.set_name(new_name))
             .ok_or(RoutineError::ExerciseNotFound(exercise_id))
     }

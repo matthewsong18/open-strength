@@ -27,8 +27,8 @@ impl Exercise {
 
     // Getters
 
-    pub fn id(&self) -> &uuid::Uuid {
-        &self.id
+    pub fn id(&self) -> Uuid {
+        self.id
     }
 
     pub fn name(&self) -> ExerciseName {
