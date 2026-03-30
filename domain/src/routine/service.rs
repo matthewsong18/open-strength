@@ -67,6 +67,19 @@ where
         Ok(routine)
     }
 
+    pub async fn get_routine(
+        &self,
+        query: &GetRoutineQuery,
+    ) -> Result<Option<Routine>, GetRoutineError> {
+        match query {
+            GetRoutineQuery::ById(id) => Ok(self.repo.get_by_id(*id).await?),
+            GetRoutineQuery::ByName(name) => {
+                let routine_name = RoutineName::new(name)?;
+                Ok(self.repo.get_by_name(&routine_name).await?)
+            }
+        }
+    }
+
     pub async fn add_exercise(
         &self,
         cmd: &AddExerciseToRoutineCommand,
@@ -333,6 +346,27 @@ impl AddSetCommand {
 
 #[derive(Debug, Error)]
 pub enum AddSetError {
+    #[error("routine with id {0} could not be found")]
+    RoutineNotFound(Uuid),
+
+    #[error("domain rule violation: {0}")]
+    Domain(#[from] RoutineError),
+
+    #[error("repository error: {0}")]
+    Repository(#[from] RoutineRepositoryError),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum GetRoutineQuery {
+    ById(Uuid),
+    ByName(String),
+}
+
+#[derive(Debug, Error)]
+pub enum GetRoutineError {
+    #[error(transparent)]
+    Validation(#[from] RoutineNameEmptyError),
+
     #[error("routine with id {0} could not be found")]
     RoutineNotFound(Uuid),
 

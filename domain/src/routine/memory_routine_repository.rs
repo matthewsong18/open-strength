@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
-use super::models::root::Routine;
+use super::models::root::{Routine, RoutineName};
 use super::ports::{RoutineRepository, RoutineRepositoryError};
 
 #[derive(Debug, Clone)]
@@ -24,6 +24,18 @@ impl Default for MemoryRoutineRepository {
 }
 
 impl RoutineRepository for MemoryRoutineRepository {
+    async fn exists_by_name(&self, name: &RoutineName) -> Result<bool, RoutineRepositoryError> {
+        let mut storage = self
+            .routine_storage
+            .lock()
+            .map_err(|_| RoutineRepositoryError::Internal("Lock poisoned".to_string()))?;
+
+        match storage.iter_mut().find(|r| r.name() == name) {
+            Some(_) => Ok(true),
+            None => Ok(false),
+        }
+    }
+
     async fn get_all(&self) -> Result<Vec<Routine>, RoutineRepositoryError> {
         let storage = self
             .routine_storage
@@ -41,6 +53,18 @@ impl RoutineRepository for MemoryRoutineRepository {
         Ok(routine)
     }
 
+    async fn get_by_name(
+        &self,
+        name: &RoutineName,
+    ) -> Result<Option<Routine>, RoutineRepositoryError> {
+        let storage = self
+            .routine_storage
+            .lock()
+            .map_err(|_| RoutineRepositoryError::Internal("Lock poisoned".to_string()))?;
+
+        Ok(storage.iter().find(|r| r.name() == name).cloned())
+    }
+
     async fn save(&self, routine: &Routine) -> Result<(), RoutineRepositoryError> {
         let mut storage = self
             .routine_storage
@@ -54,20 +78,5 @@ impl RoutineRepository for MemoryRoutineRepository {
         }
 
         Ok(())
-    }
-
-    async fn exists_by_name(
-        &self,
-        name: &super::models::root::RoutineName,
-    ) -> Result<bool, RoutineRepositoryError> {
-        let mut storage = self
-            .routine_storage
-            .lock()
-            .map_err(|_| RoutineRepositoryError::Internal("Lock poisoned".to_string()))?;
-
-        match storage.iter_mut().find(|r| r.name() == name) {
-            Some(_) => Ok(true),
-            None => Ok(false),
-        }
     }
 }

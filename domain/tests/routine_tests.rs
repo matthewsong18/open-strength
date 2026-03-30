@@ -2,7 +2,8 @@ use domain::routine::{
     memory_routine_repository::MemoryRoutineRepository,
     service::{
         AddExerciseToRoutineCommand, AddSetCommand, CreateRoutineCommand, CreateRoutineError,
-        RenameExerciseCommand, RenameRoutineCommand, RenameRoutineError, RoutineService,
+        GetRoutineQuery, RenameExerciseCommand, RenameRoutineCommand, RenameRoutineError,
+        RoutineService,
     },
 };
 
@@ -253,6 +254,38 @@ async fn test_add_set_success() {
         .iter()
         .rfind(|s| s.id() == expected_set_id)
         .unwrap();
+}
+
+#[tokio::test]
+async fn test_get_routine() {
+    let repo = MemoryRoutineRepository::new();
+    let service = get_test_service_with_repo(repo.clone());
+
+    let expected_routine_id = service
+        .create_routine(&CreateRoutineCommand {
+            name: "Routine".to_string(),
+        })
+        .await
+        .unwrap()
+        .id();
+
+    let new_service = get_test_service_with_repo(repo);
+
+    let actual_id_from_id = new_service
+        .get_routine(&GetRoutineQuery::ById(expected_routine_id))
+        .await
+        .unwrap()
+        .unwrap()
+        .id();
+    let actual_id_from_name = new_service
+        .get_routine(&GetRoutineQuery::ByName("Routine".to_string()))
+        .await
+        .unwrap()
+        .unwrap()
+        .id();
+
+    assert_eq!(expected_routine_id, actual_id_from_id);
+    assert_eq!(expected_routine_id, actual_id_from_name);
 }
 
 // #[test]

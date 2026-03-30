@@ -15,6 +15,10 @@ pub trait RoutineRepository: Clone + Send + Sync + 'static {
         &self,
         id: Uuid,
     ) -> impl Future<Output = Result<Option<Routine>, RoutineRepositoryError>> + Send;
+    fn get_by_name(
+        &self,
+        name: &RoutineName,
+    ) -> impl Future<Output = Result<Option<Routine>, RoutineRepositoryError>> + Send;
     fn save(
         &self,
         routine: &Routine,
