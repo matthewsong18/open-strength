@@ -53,13 +53,14 @@ impl Exercise {
         self.equipment = Some(new_equipment)
     }
 
-    pub(crate) fn add_set(&mut self, reps: u8) {
-        self.sets.push(Set::new(reps));
+    pub(crate) fn add_set(&mut self, new_set: Set) {
+        self.sets.push(new_set);
     }
 
     pub(crate) fn with_sets(mut self, sets: u8, reps: u8) -> Self {
         for _ in 0..sets {
-            self.add_set(reps);
+            let new_set = Set::new(Uuid::now_v7(), reps);
+            self.add_set(new_set);
         }
         self
     }
@@ -141,7 +142,8 @@ mod tests {
         let start_count = exercise.sets().len();
         assert_eq!(0, start_count);
 
-        exercise.add_set(10);
+        let new_set = Set::new(Uuid::now_v7(), 10);
+        exercise.add_set(new_set);
 
         let end_count = exercise.sets().len();
         assert_eq!(1, end_count);

@@ -1,7 +1,7 @@
 use domain::routine::{
     memory_routine_repository::MemoryRoutineRepository,
     service::{
-        AddExerciseToRoutineCommand, CreateRoutineCommand, CreateRoutineError,
+        AddExerciseToRoutineCommand, AddSetCommand, CreateRoutineCommand, CreateRoutineError,
         RenameExerciseCommand, RenameRoutineCommand, RenameRoutineError, RoutineService,
     },
 };
@@ -142,7 +142,11 @@ async fn test_rename_exercise_succeeds() {
         RenameExerciseCommand::new(*updated_routine.id(), exercise_id, new_name.clone());
 
     let result_routine = service.rename_exercise(&rename_exercise_cmd).await.unwrap();
-    let updated_exercise_name = result_routine.get_exercise(0).unwrap().name().to_string();
+    let updated_exercise_name = result_routine
+        .get_exercise(exercise_id)
+        .unwrap()
+        .name()
+        .to_string();
 
     assert_eq!(new_name, updated_exercise_name)
 }
@@ -210,11 +214,46 @@ async fn test_add_exercise_persistence() {
     let persisted_routine = new_service.rename_exercise(&rename_cmd).await.unwrap();
     assert_eq!(persisted_routine.exercise_count(), 1);
     assert_eq!(
-        persisted_routine.get_exercise(0).unwrap().name().to_string(),
+        persisted_routine
+            .get_exercise(add_exercise_cmd.new_exercise_id())
+            .unwrap()
+            .name()
+            .to_string(),
         "Incline Bench Press"
     );
 }
 
+#[tokio::test]
+async fn test_add_set_success() {
+    let repo = MemoryRoutineRepository::new();
+    let service = get_test_service_with_repo(repo.clone());
+
+    let routine_id = *service
+        .create_routine(&CreateRoutineCommand {
+            name: "Routine".to_string(),
+        })
+        .await
+        .unwrap()
+        .id();
+
+    let add_exercise_cmd = AddExerciseToRoutineCommand::new(routine_id, "Bench Press");
+    service.add_exercise(&add_exercise_cmd).await.unwrap();
+
+    let add_set_cmd = AddSetCommand::new(routine_id, add_exercise_cmd.new_exercise_id());
+    let routine = service.add_set(&add_set_cmd).await.unwrap();
+
+    // assert that a set exists that matches the expected set id
+
+    let exercise_id = add_exercise_cmd.new_exercise_id();
+    let expected_set_id = add_set_cmd.new_set_id();
+    routine
+        .get_exercise(exercise_id)
+        .unwrap()
+        .sets()
+        .iter()
+        .rfind(|s| *s.id() == expected_set_id)
+        .unwrap();
+}
 
 // #[test]
 // fn test_init_routine() {

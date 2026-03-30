@@ -13,9 +13,9 @@ pub struct Set {
 }
 
 impl Set {
-    pub fn new(reps: u8) -> Self {
+    pub fn new(id: Uuid, reps: u8) -> Self {
         Self {
-            id: Uuid::now_v7(),
+            id,
             reps,
             weight: None,
             intensity: None,

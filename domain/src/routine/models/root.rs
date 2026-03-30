@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::routine::models::exercise::ExerciseName;
 
-use super::exercise::Exercise;
+use super::{exercise::Exercise, set::Set};
 
 /// The aggregate root and core of the domain is tracking repeatable workouts.
 /// As such, this contains all the information necessary for a given workout.
@@ -53,8 +53,8 @@ impl Routine {
         &self.created_at
     }
 
-    pub fn get_exercise(&self, exercise_index: usize) -> Option<&Exercise> {
-        self.exercises.get(exercise_index)
+    pub fn get_exercise(&self, exercise_id: Uuid) -> Option<&Exercise> {
+        self.exercises.iter().find(|e| *e.id() == exercise_id)
     }
 
     pub fn get_exercises(&self) -> &[Exercise] {
@@ -90,13 +90,13 @@ impl Routine {
     pub(crate) fn add_set_to_exercise(
         &mut self,
         exercise_id: Uuid,
-        reps: u8,
+        new_set: Set,
     ) -> Result<(), RoutineError> {
         self.exercises
             .iter_mut()
             .find(|exercise| *exercise.id() == exercise_id)
             .map(|exercise| {
-                exercise.add_set(reps);
+                exercise.add_set(new_set);
             })
             .ok_or(RoutineError::ExerciseNotFound(exercise_id))
     }
