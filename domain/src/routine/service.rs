@@ -6,7 +6,7 @@ use super::{
         exercise::{
             EquipmentName, EquipmentNameEmptyError, Exercise, ExerciseName, ExerciseNameEmptyError,
         },
-        root::{Routine, RoutineName, RoutineNameEmptyError},
+        root::{Routine, RoutineError, RoutineName, RoutineNameEmptyError},
     },
     ports::{RoutineRepository, RoutineRepositoryError},
 };
@@ -61,6 +61,8 @@ where
 
         routine.set_name(routine_name);
 
+        self.repo.save(&routine).await?;
+
         Ok(routine)
     }
 
@@ -70,10 +72,11 @@ where
     ) -> Result<Routine, AddExerciseToRoutineError> {
         let mut routine = self
             .repo
-            .get_by_id(cmd.target_id)
+            .get_by_id(cmd.target_routine_id)
             .await?
-            .ok_or(AddExerciseToRoutineError::NotFound(cmd.target_id))?;
+            .ok_or(AddExerciseToRoutineError::NotFound(cmd.target_routine_id))?;
 
+        let exercise_id: Uuid = cmd.new_exercise_id;
         let exercise_name: ExerciseName = ExerciseName::new(&cmd.exercise_name)?;
         let equipment_name: Option<EquipmentName> = match &cmd.equipment_name {
             Some(raw_equipment_name) => {
@@ -86,9 +89,12 @@ where
         let sets = cmd.number_of_sets.unwrap_or(3u8);
         let reps = cmd.number_of_reps.unwrap_or(10u8);
 
-        let exercise = Exercise::new(exercise_name, equipment_name).with_sets(sets, reps);
+        let exercise =
+            Exercise::new(exercise_id, exercise_name, equipment_name).with_sets(sets, reps);
 
         routine.add_exercise(exercise);
+
+        self.repo.save(&routine).await?;
 
         Ok(routine)
     }
@@ -97,7 +103,20 @@ where
         &self,
         cmd: &RenameExerciseCommand,
     ) -> Result<Routine, RenameExerciseError> {
-        todo!()
+        let new_name = ExerciseName::new(&cmd.new_name)?;
+        let exercise_id = cmd.exercise_id;
+
+        let mut routine = self
+            .repo
+            .get_by_id(cmd.routine_id)
+            .await?
+            .ok_or(RenameExerciseError::RoutineNotFound(cmd.routine_id))?;
+
+        routine.rename_exercise(exercise_id, new_name)?;
+
+        self.repo.save(&routine).await?;
+
+        Ok(routine)
     }
 }
 
@@ -141,11 +160,60 @@ pub enum RenameRoutineError {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AddExerciseToRoutineCommand {
-    pub target_id: Uuid,
-    pub exercise_name: String,
-    pub equipment_name: Option<String>,
-    pub number_of_sets: Option<u8>,
-    pub number_of_reps: Option<u8>,
+    target_routine_id: Uuid,
+    new_exercise_id: Uuid,
+    exercise_name: String,
+    equipment_name: Option<String>,
+    number_of_sets: Option<u8>,
+    number_of_reps: Option<u8>,
+}
+
+impl AddExerciseToRoutineCommand {
+    pub fn new(target_routine_id: Uuid, exercise_name: impl Into<String>) -> Self {
+        Self {
+            target_routine_id,
+            new_exercise_id: uuid::Uuid::now_v7(),
+            exercise_name: exercise_name.into(),
+            equipment_name: None,
+            number_of_sets: None,
+            number_of_reps: None,
+        }
+    }
+
+    pub fn with_equipment(mut self, equipment: impl Into<String>) -> Self {
+        self.equipment_name = Some(equipment.into());
+        self
+    }
+
+    pub fn with_sets_and_reps(mut self, sets: u8, reps: u8) -> Self {
+        self.number_of_sets = Some(sets);
+        self.number_of_reps = Some(reps);
+        self
+    }
+
+    pub fn target_routine_id(&self) -> Uuid {
+        self.target_routine_id
+    }
+
+    pub fn new_exercise_id(&self) -> Uuid {
+        self.new_exercise_id
+    }
+
+    pub fn exercise_name(&self) -> &str {
+        &self.exercise_name
+    }
+
+    pub fn equipment_name(&self) -> Option<&str> {
+        self.equipment_name.as_deref()
+    }
+
+    pub fn number_of_sets(&self) -> Option<u8> {
+        self.number_of_sets
+    }
+
+    pub fn number_of_reps(&self) -> Option<u8> {
+        self.number_of_reps
+    }
 }
 
 #[derive(Debug, Error)]
@@ -165,9 +233,31 @@ pub enum AddExerciseToRoutineError {
 
 #[derive(Clone, Debug)]
 pub struct RenameExerciseCommand {
-    pub routine_id: Uuid,
-    pub exercise_id: Uuid,
-    pub new_name: String,
+    routine_id: Uuid,
+    exercise_id: Uuid,
+    new_name: String,
+}
+
+impl RenameExerciseCommand {
+    pub fn new(routine_id: Uuid, exercise_id: Uuid, new_name: impl Into<String>) -> Self {
+        Self {
+            routine_id,
+            exercise_id,
+            new_name: new_name.into(),
+        }
+    }
+
+    pub fn routine_id(&self) -> Uuid {
+        self.routine_id
+    }
+
+    pub fn exercise_id(&self) -> Uuid {
+        self.exercise_id
+    }
+
+    pub fn new_name(&self) -> &str {
+        &self.new_name
+    }
 }
 
 #[derive(Debug, Error)]
@@ -178,8 +268,8 @@ pub enum RenameExerciseError {
     #[error("routine with id {0} could not be found")]
     RoutineNotFound(Uuid),
 
-    #[error("exercise with id {0} could not be found")]
-    ExerciseNotFound(Uuid),
+    #[error("domain rule violation: {0}")]
+    Domain(#[from] RoutineError),
 
     #[error("repository error: {0}")]
     Repository(#[from] RoutineRepositoryError),

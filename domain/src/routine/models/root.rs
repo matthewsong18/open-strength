@@ -3,6 +3,8 @@ use std::fmt::{Display, Formatter};
 use thiserror::Error;
 use uuid::Uuid;
 
+use crate::routine::models::exercise::ExerciseName;
+
 use super::exercise::Exercise;
 
 /// The aggregate root and core of the domain is tracking repeatable workouts.
@@ -96,6 +98,18 @@ impl Routine {
             .map(|exercise| {
                 exercise.add_set(reps);
             })
+            .ok_or(RoutineError::ExerciseNotFound(exercise_id))
+    }
+
+    pub(crate) fn rename_exercise(
+        &mut self,
+        exercise_id: Uuid,
+        new_name: ExerciseName,
+    ) -> Result<(), RoutineError> {
+        self.exercises
+            .iter_mut()
+            .find(|exercise| *exercise.id() == exercise_id)
+            .map(|exercise| exercise.set_name(new_name))
             .ok_or(RoutineError::ExerciseNotFound(exercise_id))
     }
 }

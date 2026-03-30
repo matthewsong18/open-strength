@@ -16,11 +16,12 @@ pub struct Exercise {
 }
 
 impl Exercise {
-    pub(crate) fn new(name: ExerciseName, equipment: Option<EquipmentName>) -> Self {
+    pub(crate) fn new(id: Uuid, name: ExerciseName, equipment: Option<EquipmentName>) -> Self {
         Self {
+            id,
             name,
             equipment,
-            ..Default::default()
+            sets: Vec::<Set>::new(),
         }
     }
 
@@ -79,17 +80,6 @@ impl Exercise {
     }
 }
 
-impl Default for Exercise {
-    fn default() -> Self {
-        Self {
-            id: Uuid::now_v7(),
-            name: ExerciseName::default(),
-            equipment: None,
-            sets: Vec::new(),
-        }
-    }
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ExerciseName(String);
 
@@ -105,12 +95,6 @@ impl ExerciseName {
         } else {
             Ok(Self(trimmed.to_string()))
         }
-    }
-}
-
-impl Default for ExerciseName {
-    fn default() -> Self {
-        Self("Untitled Exercise".to_string())
     }
 }
 
@@ -138,12 +122,6 @@ impl EquipmentName {
     }
 }
 
-impl Default for EquipmentName {
-    fn default() -> Self {
-        Self("Untitled Equipment".to_string())
-    }
-}
-
 impl Display for EquipmentName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.0)
@@ -156,8 +134,9 @@ mod tests {
 
     #[test]
     fn test_exercise_add_set() {
+        let exercise_id = Uuid::now_v7();
         let exercise_name: ExerciseName = ExerciseName::new("Chest Press").unwrap();
-        let mut exercise = Exercise::new(exercise_name, None);
+        let mut exercise = Exercise::new(exercise_id, exercise_name, None);
 
         let start_count = exercise.sets().len();
         assert_eq!(0, start_count);

@@ -1,13 +1,18 @@
 use domain::routine::{
     memory_routine_repository::MemoryRoutineRepository,
     service::{
-        self, AddExerciseToRoutineCommand, CreateRoutineCommand, CreateRoutineError,
+        AddExerciseToRoutineCommand, CreateRoutineCommand, CreateRoutineError,
         RenameExerciseCommand, RenameRoutineCommand, RenameRoutineError, RoutineService,
     },
 };
 
 fn get_test_service() -> RoutineService<MemoryRoutineRepository> {
-    let repo: MemoryRoutineRepository = MemoryRoutineRepository::new();
+    get_test_service_with_repo(MemoryRoutineRepository::new())
+}
+
+fn get_test_service_with_repo(
+    repo: MemoryRoutineRepository,
+) -> RoutineService<MemoryRoutineRepository> {
     RoutineService::new(repo)
 }
 
@@ -58,13 +63,7 @@ async fn test_add_valid_exercise() {
     let test_routine = service.create_routine(&test_routine_request).await.unwrap();
 
     let id = *test_routine.id();
-    let add_exercise_request = AddExerciseToRoutineCommand {
-        target_id: id,
-        exercise_name: "Chest Press".to_string(),
-        equipment_name: Some("Bench Press".to_string()),
-        number_of_sets: None,
-        number_of_reps: None,
-    };
+    let add_exercise_request = AddExerciseToRoutineCommand::new(id, "Chest Press");
     let result_routine = service.add_exercise(&add_exercise_request).await.unwrap();
 
     assert_eq!(result_routine.exercise_count(), 1);
@@ -132,30 +131,90 @@ async fn test_rename_exercise_succeeds() {
     };
     let routine = service.create_routine(&new_routine_cmd).await.unwrap();
 
-    let new_exercise_cmd = AddExerciseToRoutineCommand {
-        target_id: *routine.id(),
-        exercise_name: "Exercise1".to_string(),
-        equipment_name: None,
-        number_of_sets: None,
-        number_of_reps: None,
-    };
+    let new_exercise_cmd = AddExerciseToRoutineCommand::new(*routine.id(), "Exercise1");
     let updated_routine = service.add_exercise(&new_exercise_cmd).await.unwrap();
 
     // attempt to rename exercise
 
-    let exercise_id = *updated_routine.get_exercise(0).unwrap().id();
+    let exercise_id = new_exercise_cmd.new_exercise_id();
     let new_name = "RenamedExercise".to_string();
-    let rename_exercise_cmd = RenameExerciseCommand {
-        routine_id: *updated_routine.id(),
-        exercise_id,
-        new_name: new_name.clone(),
-    };
+    let rename_exercise_cmd =
+        RenameExerciseCommand::new(*updated_routine.id(), exercise_id, new_name.clone());
 
     let result_routine = service.rename_exercise(&rename_exercise_cmd).await.unwrap();
     let updated_exercise_name = result_routine.get_exercise(0).unwrap().name().to_string();
 
     assert_eq!(new_name, updated_exercise_name)
 }
+
+#[tokio::test]
+async fn test_rename_routine_persistence() {
+    let repo = MemoryRoutineRepository::new();
+    let service = get_test_service_with_repo(repo.clone());
+
+    let original_name = "Chest Day".to_string();
+    let routine = service
+        .create_routine(&CreateRoutineCommand {
+            name: original_name.clone(),
+        })
+        .await
+        .unwrap();
+
+    let new_name = "Push Day".to_string();
+    service
+        .rename_routine(&RenameRoutineCommand {
+            new_name: new_name.clone(),
+            target_id: *routine.id(),
+        })
+        .await
+        .unwrap();
+
+    // fetch from a fresh service instance to verify persistence
+    // we verify by attempting to rename the same routine again, which should have the new name
+    let new_service = get_test_service_with_repo(repo);
+    let result_routine = new_service
+        .rename_routine(&RenameRoutineCommand {
+            new_name: "Another Name".to_string(),
+            target_id: *routine.id(),
+        })
+        .await
+        .unwrap();
+
+    assert_eq!(result_routine.name().to_string(), "Another Name");
+}
+
+#[tokio::test]
+async fn test_add_exercise_persistence() {
+    let repo = MemoryRoutineRepository::new();
+    let service = get_test_service_with_repo(repo.clone());
+
+    let routine = service
+        .create_routine(&CreateRoutineCommand {
+            name: "Routine".to_string(),
+        })
+        .await
+        .unwrap();
+
+    let add_exercise_cmd = AddExerciseToRoutineCommand::new(*routine.id(), "Bench Press");
+    service.add_exercise(&add_exercise_cmd).await.unwrap();
+
+    // verify persistence by attempting to rename the exercise in a fresh service
+    let new_service = get_test_service_with_repo(repo);
+    let rename_cmd = RenameExerciseCommand::new(
+        *routine.id(),
+        add_exercise_cmd.new_exercise_id(),
+        "Incline Bench Press",
+    );
+
+    // If it wasn't persisted, this would fail with ExerciseNotFound
+    let persisted_routine = new_service.rename_exercise(&rename_cmd).await.unwrap();
+    assert_eq!(persisted_routine.exercise_count(), 1);
+    assert_eq!(
+        persisted_routine.get_exercise(0).unwrap().name().to_string(),
+        "Incline Bench Press"
+    );
+}
+
 
 // #[test]
 // fn test_init_routine() {
