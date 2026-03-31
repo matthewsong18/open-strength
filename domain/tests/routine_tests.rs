@@ -18,55 +18,72 @@ fn get_test_service_with_repo(
 }
 
 #[tokio::test]
-async fn test_create_empty_routine() {
+async fn test_create_empty_routine() -> anyhow::Result<()> {
     let service = get_test_service();
     let routine_name = "Push Day".to_string();
     let request: CreateRoutineCommand = CreateRoutineCommand::new(routine_name.clone());
-    let test_routine = service.create_routine(&request).await.unwrap();
+    let test_routine = service.create_routine(&request).await?;
 
     assert_eq!(routine_name, *test_routine.name().to_string());
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_rename_routine() {
+async fn test_rename_routine() -> anyhow::Result<()> {
     let service = get_test_service();
 
     let routine_name = "Chest Day".to_string();
     let test_routine_request = CreateRoutineCommand::new(routine_name.clone());
-    let test_routine = service.create_routine(&test_routine_request).await.unwrap();
+    let test_routine = service.create_routine(&test_routine_request).await?;
 
     let new_routine_name = "Push Day".to_string();
     let request = RenameRoutineCommand::new(test_routine.id(), &new_routine_name);
-    let updated_routine = service
-        .rename_routine(&request)
-        .await
-        .unwrap_or_else(|e| panic!("{}", e));
+    let updated_routine = service.rename_routine(&request).await?;
 
     assert_eq!(new_routine_name, updated_routine.name().to_string());
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_add_valid_exercise() {
-    let service = get_test_service();
+async fn test_add_valid_exercise() -> anyhow::Result<()> {
+    let repo = MemoryRoutineRepository::new();
+    let service = get_test_service_with_repo(repo.clone());
 
-    let routine_name = "Chest Day".to_string();
-    let test_routine_request = CreateRoutineCommand::new(routine_name);
-    let test_routine = service.create_routine(&test_routine_request).await.unwrap();
+    let routine_name = "Chest Day";
 
-    let id = test_routine.id();
-    let add_exercise_request = AddExerciseToRoutineCommand::new(id, "Chest Press");
-    let result_routine = service.add_exercise(&add_exercise_request).await.unwrap();
+    let create_routine_command = CreateRoutineCommand::new(routine_name);
+    let routine = service.create_routine(&create_routine_command).await?;
 
-    assert_eq!(result_routine.exercise_count(), 1);
+    let routine_id = routine.id();
+    let add_exercise_command = AddExerciseToRoutineCommand::new(routine_id, "Chest Press");
+    let exercise_id = add_exercise_command.new_exercise_id();
+    service.add_exercise(&add_exercise_command).await?;
+
+    let new_service = get_test_service_with_repo(repo.clone());
+    let test_routine = new_service
+        .get_routine(&GetRoutineQuery::ById(routine_id))
+        .await?
+        .unwrap();
+
+    let result = test_routine
+        .get_exercises()
+        .iter()
+        .find(|e| e.id() == exercise_id);
+
+    assert!(result.is_some());
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_duplicate_routine_returns_error() {
+async fn test_create_duplicate_routine_returns_error() -> anyhow::Result<()> {
     let service = get_test_service();
 
     let request = CreateRoutineCommand::new("Original");
     // create the initial routine successfully
-    service.create_routine(&request).await.unwrap();
+    service.create_routine(&request).await?;
 
     // attempt to create the duplicate and extract the error
     let err = service.create_routine(&request).await.unwrap_err();
@@ -76,18 +93,20 @@ async fn test_create_duplicate_routine_returns_error() {
         "Expected Duplicate error, but got: {:?}",
         err
     );
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_rename_to_duplicate_routine_returns_error() {
+async fn test_rename_to_duplicate_routine_returns_error() -> anyhow::Result<()> {
     let service = get_test_service();
 
     // setup
     let original_request = CreateRoutineCommand::new("Original");
-    service.create_routine(&original_request).await.unwrap();
+    service.create_routine(&original_request).await?;
 
     let new_request = CreateRoutineCommand::new("New");
-    let new_routine = service.create_routine(&new_request).await.unwrap();
+    let new_routine = service.create_routine(&new_request).await?;
 
     // attempt to rename the second routine to the first routine's name
     let rename_request = RenameRoutineCommand::new(new_routine.id(), "Original");
@@ -98,161 +117,119 @@ async fn test_rename_to_duplicate_routine_returns_error() {
         "Expected Duplicate error, but got: {:?}",
         err
     );
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_rename_exercise_succeeds() {
-    let service = get_test_service();
+async fn test_rename_exercise_succeeds() -> anyhow::Result<()> {
+    let repo = MemoryRoutineRepository::new();
+    let service = get_test_service_with_repo(repo.clone());
 
     // setup
 
     let new_routine_cmd = CreateRoutineCommand::new("Routine");
-    let routine = service.create_routine(&new_routine_cmd).await.unwrap();
+    let routine = service.create_routine(&new_routine_cmd).await?;
 
     let new_exercise_cmd = AddExerciseToRoutineCommand::new(routine.id(), "Exercise1");
-    let updated_routine = service.add_exercise(&new_exercise_cmd).await.unwrap();
+    let updated_routine = service.add_exercise(&new_exercise_cmd).await?;
 
     // attempt to rename exercise
 
     let exercise_id = new_exercise_cmd.new_exercise_id();
     let new_name = "RenamedExercise".to_string();
-    let rename_exercise_cmd =
-        RenameExerciseCommand::new(updated_routine.id(), exercise_id, new_name.clone());
 
-    let result_routine = service.rename_exercise(&rename_exercise_cmd).await.unwrap();
-    let updated_exercise_name = result_routine
+    let result_routine_id = service
+        .rename_exercise(&RenameExerciseCommand::new(
+            updated_routine.id(),
+            exercise_id,
+            new_name.clone(),
+        ))
+        .await?
+        .id();
+
+    // assert that routine rename persisted with a new service
+
+    let new_service = get_test_service_with_repo(repo.clone());
+    let test_routine = new_service
+        .get_routine(&GetRoutineQuery::ById(result_routine_id))
+        .await?
+        .unwrap();
+
+    let updated_exercise_name = test_routine
         .get_exercise(exercise_id)
         .unwrap()
         .name()
         .to_string();
 
-    assert_eq!(new_name, updated_exercise_name)
+    assert_eq!(new_name, updated_exercise_name);
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_rename_routine_persistence() {
-    let repo = MemoryRoutineRepository::new();
-    let service = get_test_service_with_repo(repo.clone());
-
-    let original_name = "Chest Day".to_string();
-    let routine = service
-        .create_routine(&CreateRoutineCommand::new(original_name))
-        .await
-        .unwrap();
-
-    let new_name = "Push Day".to_string();
-    service
-        .rename_routine(&RenameRoutineCommand::new(routine.id(), new_name))
-        .await
-        .unwrap();
-
-    // fetch from a fresh service instance to verify persistence we verify by
-    // attempting to rename the same routine again, which should have the new
-    // name
-    let new_service = get_test_service_with_repo(repo);
-    let result_routine = new_service
-        .rename_routine(&RenameRoutineCommand::new(
-            routine.id(),
-            "Another Name".to_string(),
-        ))
-        .await
-        .unwrap();
-
-    assert_eq!(result_routine.name().to_string(), "Another Name");
-}
-
-#[tokio::test]
-async fn test_add_exercise_persistence() {
-    let repo = MemoryRoutineRepository::new();
-    let service = get_test_service_with_repo(repo.clone());
-
-    let routine = service
-        .create_routine(&CreateRoutineCommand::new("Routine".to_string()))
-        .await
-        .unwrap();
-
-    let add_exercise_cmd = AddExerciseToRoutineCommand::new(routine.id(), "Bench Press");
-    service.add_exercise(&add_exercise_cmd).await.unwrap();
-
-    // verify persistence by attempting to rename the exercise in a fresh service
-    let new_service = get_test_service_with_repo(repo);
-    let rename_cmd = RenameExerciseCommand::new(
-        routine.id(),
-        add_exercise_cmd.new_exercise_id(),
-        "Incline Bench Press",
-    );
-
-    // If it wasn't persisted, this would fail with ExerciseNotFound
-    let persisted_routine = new_service.rename_exercise(&rename_cmd).await.unwrap();
-    assert_eq!(persisted_routine.exercise_count(), 1);
-    assert_eq!(
-        persisted_routine
-            .get_exercise(add_exercise_cmd.new_exercise_id())
-            .unwrap()
-            .name()
-            .to_string(),
-        "Incline Bench Press"
-    );
-}
-
-#[tokio::test]
-async fn test_add_set_success() {
+async fn test_add_set_success() -> anyhow::Result<()> {
     let repo = MemoryRoutineRepository::new();
     let service = get_test_service_with_repo(repo.clone());
 
     let routine_id = service
         .create_routine(&CreateRoutineCommand::new("Routine"))
-        .await
-        .unwrap()
+        .await?
         .id();
 
     let add_exercise_cmd = AddExerciseToRoutineCommand::new(routine_id, "Bench Press");
-    service.add_exercise(&add_exercise_cmd).await.unwrap();
+    service.add_exercise(&add_exercise_cmd).await?;
 
     let add_set_cmd = AddSetCommand::new(routine_id, add_exercise_cmd.new_exercise_id());
-    let routine = service.add_set(&add_set_cmd).await.unwrap();
+    service.add_set(&add_set_cmd).await?;
 
     // assert that a set exists that matches the expected set id
 
+    let new_service = get_test_service_with_repo(repo.clone());
+    let test_routine = new_service
+        .get_routine(&GetRoutineQuery::ById(routine_id))
+        .await?
+        .unwrap();
+
     let exercise_id = add_exercise_cmd.new_exercise_id();
     let expected_set_id = add_set_cmd.new_set_id();
-    routine
+    test_routine
         .get_exercise(exercise_id)
         .unwrap()
         .sets()
         .iter()
         .rfind(|s| s.id() == expected_set_id)
         .unwrap();
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_get_routine() {
+async fn test_get_routine() -> anyhow::Result<()> {
     let repo = MemoryRoutineRepository::new();
     let service = get_test_service_with_repo(repo.clone());
 
     let expected_routine_id = service
         .create_routine(&CreateRoutineCommand::new("Routine"))
-        .await
-        .unwrap()
+        .await?
         .id();
 
     let new_service = get_test_service_with_repo(repo);
 
     let actual_id_from_id = new_service
         .get_routine(&GetRoutineQuery::ById(expected_routine_id))
-        .await
-        .unwrap()
+        .await?
         .unwrap()
         .id();
     let actual_id_from_name = new_service
         .get_routine(&GetRoutineQuery::ByName("Routine".to_string()))
-        .await
-        .unwrap()
+        .await?
         .unwrap()
         .id();
 
     assert_eq!(expected_routine_id, actual_id_from_id);
     assert_eq!(expected_routine_id, actual_id_from_name);
+    Ok(())
 }
 
 // #[test]

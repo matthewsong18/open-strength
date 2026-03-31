@@ -194,7 +194,7 @@ impl RenameRoutineCommand {
         &self.new_name
     }
 
-    pub fn target_id(&self) -> Uuid {
+    pub fn routine_id(&self) -> Uuid {
         self.routine_id
     }
 }
@@ -247,7 +247,7 @@ impl AddExerciseToRoutineCommand {
         self
     }
 
-    pub fn target_routine_id(&self) -> Uuid {
+    pub fn routine_id(&self) -> Uuid {
         self.routine_id
     }
 
