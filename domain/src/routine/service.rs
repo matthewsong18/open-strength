@@ -33,7 +33,6 @@ where
         let routine: Routine = Routine::new(cmd.routine_id(), routine_name.clone());
 
         let exists_by_name = self.repo.exists_by_name(&routine_name).await?;
-
         if exists_by_name {
             return Err(CreateRoutineError::Duplicate(routine_name));
         }
@@ -47,18 +46,18 @@ where
         &self,
         cmd: &RenameRoutineCommand,
     ) -> Result<Routine, RenameRoutineError> {
+        let routine_name = RoutineName::try_from(cmd.new_name.clone())?;
+
+        let exists_by_name = self.repo.exists_by_name(&routine_name).await?;
+        if exists_by_name {
+            return Err(RenameRoutineError::Duplicate(routine_name));
+        }
+
         let mut routine = self
             .repo
             .get_by_id(cmd.routine_id)
             .await?
             .ok_or(RenameRoutineError::NotFound(cmd.routine_id))?;
-
-        let routine_name = RoutineName::try_from(cmd.new_name.clone())?;
-        let exists_by_name = self.repo.exists_by_name(&routine_name).await?;
-
-        if exists_by_name {
-            return Err(RenameRoutineError::Duplicate(routine_name));
-        }
 
         routine.set_name(routine_name);
 
@@ -84,27 +83,22 @@ where
         &self,
         cmd: &AddExerciseToRoutineCommand,
     ) -> Result<Routine, AddExerciseToRoutineError> {
+        let exercise_id: Uuid = cmd.new_exercise_id();
+        let exercise_name: ExerciseName = ExerciseName::new(cmd.exercise_name())?;
+        let equipment_name: Option<EquipmentName> =
+            cmd.equipment_name().map(EquipmentName::new).transpose()?;
+
+        let mut exercise = Exercise::new(exercise_id, exercise_name, equipment_name);
+
+        if let (Some(sets), Some(reps)) = (cmd.number_of_sets(), cmd.number_of_reps()) {
+            exercise = exercise.with_sets(sets, reps);
+        }
+
         let mut routine = self
             .repo
-            .get_by_id(cmd.routine_id)
+            .get_by_id(cmd.routine_id())
             .await?
-            .ok_or(AddExerciseToRoutineError::NotFound(cmd.routine_id))?;
-
-        let exercise_id: Uuid = cmd.new_exercise_id;
-        let exercise_name: ExerciseName = ExerciseName::new(&cmd.exercise_name)?;
-        let equipment_name: Option<EquipmentName> = match &cmd.equipment_name {
-            Some(raw_equipment_name) => {
-                let equipment_name = EquipmentName::new(raw_equipment_name)?;
-                Some(equipment_name)
-            }
-            None => None,
-        };
-
-        let sets = cmd.number_of_sets.unwrap_or(3u8);
-        let reps = cmd.number_of_reps.unwrap_or(10u8);
-
-        let exercise =
-            Exercise::new(exercise_id, exercise_name, equipment_name).with_sets(sets, reps);
+            .ok_or(AddExerciseToRoutineError::NotFound(cmd.routine_id()))?;
 
         routine.add_exercise(exercise);
 

@@ -89,8 +89,9 @@ pub struct ExerciseName(String);
 pub struct ExerciseNameEmptyError;
 
 impl ExerciseName {
-    pub fn new(raw: &str) -> Result<Self, ExerciseNameEmptyError> {
-        let trimmed = raw.trim();
+    pub fn new(raw: impl Into<String>) -> Result<Self, ExerciseNameEmptyError> {
+        let raw_string = raw.into();
+        let trimmed = raw_string.trim();
         if trimmed.is_empty() {
             Err(ExerciseNameEmptyError)
         } else {
@@ -113,8 +114,9 @@ pub struct EquipmentName(String);
 pub struct EquipmentNameEmptyError;
 
 impl EquipmentName {
-    pub fn new(raw: &str) -> Result<Self, EquipmentNameEmptyError> {
-        let trimmed = raw.trim();
+    pub fn new(raw: impl Into<String>) -> Result<Self, EquipmentNameEmptyError> {
+        let raw_string = raw.into();
+        let trimmed = raw_string.trim();
         if trimmed.is_empty() {
             Err(EquipmentNameEmptyError)
         } else {
