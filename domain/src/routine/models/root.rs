@@ -112,6 +112,15 @@ impl Routine {
             .map(|exercise| exercise.set_name(new_name))
             .ok_or(RoutineError::ExerciseNotFound(exercise_id))
     }
+
+    pub(crate) fn delete_exercise(&mut self, exercise_id: Uuid) -> Result<(), RoutineError> {
+        self.exercises
+            .iter()
+            .position(|e| e.id() == exercise_id)
+            .map(|index| self.exercises.remove(index))
+            .ok_or(RoutineError::ExerciseNotFound(exercise_id))?;
+        Ok(())
+    }
 }
 
 #[derive(Debug, Error)]

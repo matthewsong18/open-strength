@@ -2,8 +2,8 @@ use domain::routine::{
     memory_routine_repository::MemoryRoutineRepository,
     service::{
         AddExerciseToRoutineCommand, AddSetCommand, CreateRoutineCommand, CreateRoutineError,
-        GetRoutineQuery, RenameExerciseCommand, RenameRoutineCommand, RenameRoutineError,
-        RoutineService,
+        DeleteExerciseCommand, GetRoutineQuery, RenameExerciseCommand, RenameRoutineCommand,
+        RenameRoutineError, RoutineService,
     },
 };
 
@@ -230,6 +230,46 @@ async fn test_get_routine() -> anyhow::Result<()> {
 
     assert_eq!(expected_routine_id, actual_id_from_id);
     assert_eq!(expected_routine_id, actual_id_from_name);
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_delete_exercise() -> anyhow::Result<()> {
+    // setup
+
+    let repo = MemoryRoutineRepository::new();
+    let service = get_test_service_with_repo(repo.clone());
+
+    let routine_id = service
+        .create_routine(&CreateRoutineCommand::new("Routine"))
+        .await?
+        .id();
+
+    let add_exercies_cmd = AddExerciseToRoutineCommand::new(routine_id, "Leg Press");
+    let exercise_id = add_exercies_cmd.new_exercise_id();
+
+    let updated_routine = service.add_exercise(&add_exercies_cmd).await?;
+
+    assert_eq!(1, updated_routine.exercise_count());
+
+    // attempt to delete an exercise
+
+    service
+        .delete_exercise(&DeleteExerciseCommand::new(routine_id, exercise_id))
+        .await?;
+
+    // Validate that exercise was deleted via new service
+
+    let new_service = get_test_service_with_repo(repo);
+
+    let exercise_count = new_service
+        .get_routine(&GetRoutineQuery::ById(routine_id))
+        .await?
+        .unwrap()
+        .exercise_count();
+
+    assert_eq!(0, exercise_count);
+
     Ok(())
 }
 

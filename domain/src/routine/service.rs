@@ -127,6 +127,26 @@ where
         Ok(routine)
     }
 
+    pub async fn delete_exercise(
+        &self,
+        cmd: &DeleteExerciseCommand,
+    ) -> Result<Routine, DeleteExerciseError> {
+        let routine_id = cmd.routine_id();
+        let exercise_id = cmd.exercise_id();
+
+        let mut routine = self
+            .repo
+            .get_by_id(routine_id)
+            .await?
+            .ok_or(DeleteExerciseError::RoutineNotFound(routine_id))?;
+
+        routine.delete_exercise(exercise_id)?;
+
+        self.repo.save(&routine).await?;
+
+        Ok(routine)
+    }
+
     pub async fn add_set(&self, cmd: &AddSetCommand) -> Result<Routine, AddSetError> {
         let mut routine: Routine = self
             .repo
@@ -396,6 +416,40 @@ pub enum GetRoutineError {
     #[error(transparent)]
     Validation(#[from] RoutineNameEmptyError),
 
+    #[error("routine with id {0} could not be found")]
+    RoutineNotFound(Uuid),
+
+    #[error("domain rule violation: {0}")]
+    Domain(#[from] RoutineError),
+
+    #[error("repository error: {0}")]
+    Repository(#[from] RoutineRepositoryError),
+}
+
+pub struct DeleteExerciseCommand {
+    routine_id: Uuid,
+    exercise_id: Uuid,
+}
+
+impl DeleteExerciseCommand {
+    pub fn new(routine_id: Uuid, exercise_id: Uuid) -> Self {
+        Self {
+            routine_id,
+            exercise_id,
+        }
+    }
+
+    pub fn routine_id(&self) -> Uuid {
+        self.routine_id
+    }
+
+    pub fn exercise_id(&self) -> Uuid {
+        self.exercise_id
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum DeleteExerciseError {
     #[error("routine with id {0} could not be found")]
     RoutineNotFound(Uuid),
 
