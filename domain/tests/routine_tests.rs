@@ -21,10 +21,7 @@ fn get_test_service_with_repo(
 async fn test_create_empty_routine() {
     let service = get_test_service();
     let routine_name = "Push Day".to_string();
-    let request: CreateRoutineCommand = CreateRoutineCommand {
-        name: routine_name.clone(),
-    };
-
+    let request: CreateRoutineCommand = CreateRoutineCommand::new(routine_name.clone());
     let test_routine = service.create_routine(&request).await.unwrap();
 
     assert_eq!(routine_name, *test_routine.name().to_string());
@@ -35,16 +32,11 @@ async fn test_rename_routine() {
     let service = get_test_service();
 
     let routine_name = "Chest Day".to_string();
-    let test_routine_request = CreateRoutineCommand {
-        name: routine_name.clone(),
-    };
+    let test_routine_request = CreateRoutineCommand::new(routine_name.clone());
     let test_routine = service.create_routine(&test_routine_request).await.unwrap();
 
     let new_routine_name = "Push Day".to_string();
-    let request = RenameRoutineCommand {
-        new_name: new_routine_name.clone(),
-        target_id: test_routine.id(),
-    };
+    let request = RenameRoutineCommand::new(test_routine.id(), &new_routine_name);
     let updated_routine = service
         .rename_routine(&request)
         .await
@@ -58,9 +50,7 @@ async fn test_add_valid_exercise() {
     let service = get_test_service();
 
     let routine_name = "Chest Day".to_string();
-    let test_routine_request = CreateRoutineCommand {
-        name: routine_name.clone(),
-    };
+    let test_routine_request = CreateRoutineCommand::new(routine_name);
     let test_routine = service.create_routine(&test_routine_request).await.unwrap();
 
     let id = test_routine.id();
@@ -74,10 +64,7 @@ async fn test_add_valid_exercise() {
 async fn test_create_duplicate_routine_returns_error() {
     let service = get_test_service();
 
-    let request = CreateRoutineCommand {
-        name: "Original".to_string(),
-    };
-
+    let request = CreateRoutineCommand::new("Original");
     // create the initial routine successfully
     service.create_routine(&request).await.unwrap();
 
@@ -96,22 +83,14 @@ async fn test_rename_to_duplicate_routine_returns_error() {
     let service = get_test_service();
 
     // setup
-    let original_request = CreateRoutineCommand {
-        name: "Original".to_string(),
-    };
+    let original_request = CreateRoutineCommand::new("Original");
     service.create_routine(&original_request).await.unwrap();
 
-    let new_request = CreateRoutineCommand {
-        name: "New".to_string(),
-    };
+    let new_request = CreateRoutineCommand::new("New");
     let new_routine = service.create_routine(&new_request).await.unwrap();
 
     // attempt to rename the second routine to the first routine's name
-    let rename_request = RenameRoutineCommand {
-        new_name: "Original".to_string(),
-        target_id: new_routine.id(),
-    };
-
+    let rename_request = RenameRoutineCommand::new(new_routine.id(), "Original");
     let err = service.rename_routine(&rename_request).await.unwrap_err();
 
     assert!(
@@ -127,9 +106,7 @@ async fn test_rename_exercise_succeeds() {
 
     // setup
 
-    let new_routine_cmd = CreateRoutineCommand {
-        name: "Routine".to_string(),
-    };
+    let new_routine_cmd = CreateRoutineCommand::new("Routine");
     let routine = service.create_routine(&new_routine_cmd).await.unwrap();
 
     let new_exercise_cmd = AddExerciseToRoutineCommand::new(routine.id(), "Exercise1");
@@ -159,29 +136,25 @@ async fn test_rename_routine_persistence() {
 
     let original_name = "Chest Day".to_string();
     let routine = service
-        .create_routine(&CreateRoutineCommand {
-            name: original_name.clone(),
-        })
+        .create_routine(&CreateRoutineCommand::new(original_name))
         .await
         .unwrap();
 
     let new_name = "Push Day".to_string();
     service
-        .rename_routine(&RenameRoutineCommand {
-            new_name: new_name.clone(),
-            target_id: routine.id(),
-        })
+        .rename_routine(&RenameRoutineCommand::new(routine.id(), new_name))
         .await
         .unwrap();
 
-    // fetch from a fresh service instance to verify persistence
-    // we verify by attempting to rename the same routine again, which should have the new name
+    // fetch from a fresh service instance to verify persistence we verify by
+    // attempting to rename the same routine again, which should have the new
+    // name
     let new_service = get_test_service_with_repo(repo);
     let result_routine = new_service
-        .rename_routine(&RenameRoutineCommand {
-            new_name: "Another Name".to_string(),
-            target_id: routine.id(),
-        })
+        .rename_routine(&RenameRoutineCommand::new(
+            routine.id(),
+            "Another Name".to_string(),
+        ))
         .await
         .unwrap();
 
@@ -194,9 +167,7 @@ async fn test_add_exercise_persistence() {
     let service = get_test_service_with_repo(repo.clone());
 
     let routine = service
-        .create_routine(&CreateRoutineCommand {
-            name: "Routine".to_string(),
-        })
+        .create_routine(&CreateRoutineCommand::new("Routine".to_string()))
         .await
         .unwrap();
 
@@ -230,9 +201,7 @@ async fn test_add_set_success() {
     let service = get_test_service_with_repo(repo.clone());
 
     let routine_id = service
-        .create_routine(&CreateRoutineCommand {
-            name: "Routine".to_string(),
-        })
+        .create_routine(&CreateRoutineCommand::new("Routine"))
         .await
         .unwrap()
         .id();
@@ -262,9 +231,7 @@ async fn test_get_routine() {
     let service = get_test_service_with_repo(repo.clone());
 
     let expected_routine_id = service
-        .create_routine(&CreateRoutineCommand {
-            name: "Routine".to_string(),
-        })
+        .create_routine(&CreateRoutineCommand::new("Routine"))
         .await
         .unwrap()
         .id();

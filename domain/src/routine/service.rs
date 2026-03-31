@@ -49,9 +49,9 @@ where
     ) -> Result<Routine, RenameRoutineError> {
         let mut routine = self
             .repo
-            .get_by_id(cmd.target_id)
+            .get_by_id(cmd.routine_id)
             .await?
-            .ok_or(RenameRoutineError::NotFound(cmd.target_id))?;
+            .ok_or(RenameRoutineError::NotFound(cmd.routine_id))?;
 
         let routine_name = RoutineName::try_from(cmd.new_name.clone())?;
         let exists_by_name = self.repo.exists_by_name(&routine_name).await?;
@@ -86,9 +86,9 @@ where
     ) -> Result<Routine, AddExerciseToRoutineError> {
         let mut routine = self
             .repo
-            .get_by_id(cmd.target_routine_id)
+            .get_by_id(cmd.routine_id)
             .await?
-            .ok_or(AddExerciseToRoutineError::NotFound(cmd.target_routine_id))?;
+            .ok_or(AddExerciseToRoutineError::NotFound(cmd.routine_id))?;
 
         let exercise_id: Uuid = cmd.new_exercise_id;
         let exercise_name: ExerciseName = ExerciseName::new(&cmd.exercise_name)?;
@@ -151,7 +151,17 @@ where
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CreateRoutineCommand {
-    pub name: String,
+    name: String,
+}
+
+impl CreateRoutineCommand {
+    pub fn new(name: impl Into<String>) -> Self {
+        Self { name: name.into() }
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 #[derive(Debug, Error)]
@@ -168,8 +178,25 @@ pub enum CreateRoutineError {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RenameRoutineCommand {
-    pub new_name: String,
-    pub target_id: Uuid,
+    routine_id: Uuid,
+    new_name: String,
+}
+
+impl RenameRoutineCommand {
+    pub fn new(routine_id: Uuid, new_name: impl Into<String>) -> Self {
+        Self {
+            routine_id,
+            new_name: new_name.into(),
+        }
+    }
+
+    pub fn new_name(&self) -> &str {
+        &self.new_name
+    }
+
+    pub fn target_id(&self) -> Uuid {
+        self.routine_id
+    }
 }
 
 #[derive(Debug, Error)]
@@ -189,7 +216,7 @@ pub enum RenameRoutineError {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AddExerciseToRoutineCommand {
-    target_routine_id: Uuid,
+    routine_id: Uuid,
     new_exercise_id: Uuid,
     exercise_name: String,
     equipment_name: Option<String>,
@@ -198,9 +225,9 @@ pub struct AddExerciseToRoutineCommand {
 }
 
 impl AddExerciseToRoutineCommand {
-    pub fn new(target_routine_id: Uuid, exercise_name: impl Into<String>) -> Self {
+    pub fn new(routine_id: Uuid, exercise_name: impl Into<String>) -> Self {
         Self {
-            target_routine_id,
+            routine_id,
             new_exercise_id: uuid::Uuid::now_v7(),
             exercise_name: exercise_name.into(),
             equipment_name: None,
@@ -221,7 +248,7 @@ impl AddExerciseToRoutineCommand {
     }
 
     pub fn target_routine_id(&self) -> Uuid {
-        self.target_routine_id
+        self.routine_id
     }
 
     pub fn new_exercise_id(&self) -> Uuid {
