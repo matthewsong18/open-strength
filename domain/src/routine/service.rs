@@ -30,7 +30,7 @@ where
         cmd: &CreateRoutineCommand,
     ) -> Result<Routine, CreateRoutineError> {
         let routine_name = RoutineName::try_from(cmd.name.clone())?;
-        let routine: Routine = Routine::new(routine_name.clone());
+        let routine: Routine = Routine::new(cmd.routine_id(), routine_name.clone());
 
         let exists_by_name = self.repo.exists_by_name(&routine_name).await?;
 
@@ -151,16 +151,24 @@ where
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CreateRoutineCommand {
+    routine_id: Uuid,
     name: String,
 }
 
 impl CreateRoutineCommand {
     pub fn new(name: impl Into<String>) -> Self {
-        Self { name: name.into() }
+        Self {
+            name: name.into(),
+            routine_id: Uuid::now_v7(),
+        }
     }
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn routine_id(&self) -> Uuid {
+        self.routine_id
     }
 }
 

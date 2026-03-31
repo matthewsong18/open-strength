@@ -23,7 +23,8 @@ macro_rules! generate_storage_tests {
 
                     let name = RoutineName::new("Push Day").expect("name shouldn't be invalid");
 
-                    let routine: Routine = Routine::new(name);
+                    let routine_id = uuid::Uuid::now_v7();
+                    let routine: Routine = Routine::new(routine_id, name);
                     repo.save(&routine).await.unwrap();
                     assert_eq!(1, repo.get_all().await.unwrap().len());
                 }
@@ -33,7 +34,8 @@ macro_rules! generate_storage_tests {
                     let repo = $setup;
 
                     let name = RoutineName::new("Push Day").expect("name shouldn't be invalid");
-                    let routine: Routine = Routine::new(name);
+                    let routine_id = uuid::Uuid::now_v7();
+                    let routine: Routine = Routine::new(routine_id, name);
 
                     repo.save(&routine).await.unwrap();
 

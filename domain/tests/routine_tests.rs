@@ -54,9 +54,10 @@ async fn test_add_valid_exercise() -> anyhow::Result<()> {
     let routine_name = "Chest Day";
 
     let create_routine_command = CreateRoutineCommand::new(routine_name);
-    let routine = service.create_routine(&create_routine_command).await?;
+    let routine_id = create_routine_command.routine_id();
 
-    let routine_id = routine.id();
+    service.create_routine(&create_routine_command).await?;
+
     let add_exercise_command = AddExerciseToRoutineCommand::new(routine_id, "Chest Press");
     let exercise_id = add_exercise_command.new_exercise_id();
     service.add_exercise(&add_exercise_command).await?;

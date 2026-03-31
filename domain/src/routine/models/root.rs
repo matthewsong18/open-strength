@@ -18,9 +18,9 @@ pub struct Routine {
 }
 
 impl Routine {
-    pub fn new(name: RoutineName) -> Self {
+    pub fn new(id: Uuid, name: RoutineName) -> Self {
         Self {
-            id: Uuid::now_v7(),
+            id,
             name,
             created_at: Utc::now(),
             exercises: Vec::<Exercise>::new(),
