@@ -1,8 +1,11 @@
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
-use crate::{common::Exercise, routine::Routine};
+use crate::routine::models::exercise::Exercise;
+use crate::routine::models::root::Routine;
+use crate::shared::{intensity::Intensity, weight::Weight};
 
+#[derive(Clone, Debug)]
 pub struct Workout {
     id: Uuid,
     source_routine_id: Option<Uuid>,
@@ -22,7 +25,7 @@ impl Workout {
 
     pub fn from_routine(routine: &Routine) -> Self {
         Self {
-            source_routine_id: Some(*routine.id()),
+            source_routine_id: Some(routine.id()),
             name: routine.name().to_string(),
             exercises: routine.get_exercises().to_vec(),
             ..Default::default()
@@ -57,13 +60,24 @@ impl Workout {
 
     // Setters
 
-    pub fn set_name(&mut self, name: impl Into<String>) -> Result<(), String> {
+    pub fn set_name(&mut self, name: impl Into<String>) {
         self.name = name.into();
-        Ok(())
     }
 
     pub fn set_completed(&mut self) {
         self.completed_at = Some(Utc::now())
+    }
+
+    pub fn log_set_performance(
+        &mut self,
+        _exercise_id: Uuid,
+        _set_id: Uuid,
+        _reps: u8,
+        _weight: Option<Weight>,
+        _intensity: Option<Intensity>,
+    ) -> Result<(), String> {
+        // Implementation for later
+        Ok(())
     }
 }
 
