@@ -1,19 +1,22 @@
-use std::sync::Arc;
-
 use dioxus::prelude::*;
-use domain::routine_repository::RoutineRepository;
+use domain::routine::{memory_routine_repository::MemoryRoutineRepository, service::RoutineService};
 
 use crate::Route;
 
 /// The Home page component that will be rendered when the current route is `[Route::Home]`
 #[component]
 pub fn Home() -> Element {
-    let routine_repo = use_context::<Arc<dyn RoutineRepository>>();
+    let service = use_context::<RoutineService<MemoryRoutineRepository>>();
 
     let routines = use_resource(move || {
-        let repo_clone = routine_repo.clone();
+        let service_clone = service.clone();
 
-        async move { repo_clone.get_all().await.unwrap_or_default() }
+        async move {
+            service_clone
+                .get_all_routines()
+                .await
+                .unwrap_or_default()
+        }
     });
 
     rsx! {

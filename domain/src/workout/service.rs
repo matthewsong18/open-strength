@@ -1,10 +1,10 @@
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::routine::ports::{RoutineRepository, RoutineRepositoryError};
-use crate::shared::{intensity::Intensity, weight::Weight};
 use super::ports::{WorkoutRepository, WorkoutRepositoryError};
 use super::workout::Workout;
+use crate::routine::ports::{RoutineRepository, RoutineRepositoryError};
+use crate::shared::{intensity::Intensity, weight::Weight};
 
 #[derive(Debug, Clone)]
 pub struct WorkoutService<WR: WorkoutRepository, RR: RoutineRepository> {
@@ -56,7 +56,14 @@ where
             .await?
             .ok_or(WorkoutServiceError::WorkoutNotFound(cmd.workout_id))?;
 
-        workout.log_set_performance(cmd.exercise_id, cmd.set_id, cmd.reps, cmd.weight.clone(), cmd.intensity.clone())
+        workout
+            .log_set_performance(
+                cmd.exercise_id,
+                cmd.set_id,
+                cmd.reps,
+                cmd.weight,
+                cmd.intensity,
+            )
             .map_err(WorkoutServiceError::Domain)?;
 
         self.workout_repo.save(&workout).await?;

@@ -1,32 +1,58 @@
-use std::sync::Arc;
-
 use dioxus::prelude::*;
-use domain::{common::Exercise, routine::Routine, routine_repository::RoutineRepository};
+use domain::routine::{
+    memory_routine_repository::MemoryRoutineRepository,
+    service::{AddExerciseToRoutineCommand, CreateRoutineCommand, RoutineService},
+};
 
 use crate::Route;
 
+#[derive(Default, Clone, PartialEq)]
+struct DraftExercise {
+    name: String,
+    equipment: String,
+    sets: Vec<u8>,
+}
+
 #[component]
 pub fn NewRoutine() -> Element {
-    let repo = use_context::<Arc<dyn RoutineRepository>>();
+    let service = use_context::<RoutineService<MemoryRoutineRepository>>();
     let navigator = use_navigator();
 
-    let mut new_routine = use_signal(Routine::new);
-    let mut new_exercise = use_signal(Exercise::default);
+    let mut routine_name = use_signal(String::new);
+    let mut exercises = use_signal(Vec::<DraftExercise>::new);
 
+    let mut new_exercise = use_signal(DraftExercise::default);
     let mut is_adding_exercise = use_signal(|| false);
 
     let save_routine = move |event: Event<FormData>| {
         event.prevent_default();
 
-        let repo_clone = repo.clone();
-
-        let routine_to_save = new_routine.read().clone();
+        let service_clone = service.clone();
+        let name = routine_name.read().clone();
+        let exercise_list = exercises.read().clone();
 
         spawn(async move {
-            match repo_clone.save(routine_to_save).await {
-                Ok(_) => navigator.push(Route::Home {}),
-                Err(_) => todo!(),
-            };
+            let create_cmd = CreateRoutineCommand::new(name);
+            let routine_id = create_cmd.routine_id();
+
+            if service_clone.create_routine(&create_cmd).await.is_ok() {
+                for ex in exercise_list {
+                    let mut add_ex_cmd = AddExerciseToRoutineCommand::new(routine_id, ex.name);
+                    if !ex.equipment.is_empty() {
+                        add_ex_cmd = add_ex_cmd.with_equipment(ex.equipment);
+                    }
+                    // Currently we only support adding one set at a time or with_sets_and_reps if they are uniform.
+                    // For simplicity, let's just use with_sets_and_reps if all reps are the same,
+                    // or just use the first set's reps for all if they are uniform.
+                    // The service currently doesn't support heterogeneous sets in a single command.
+                    if let Some(&reps) = ex.sets.first() {
+                        add_ex_cmd = add_ex_cmd.with_sets_and_reps(ex.sets.len() as u8, reps);
+                    }
+
+                    let _ = service_clone.add_exercise(&add_ex_cmd).await;
+                }
+                navigator.push(Route::Home {});
+            }
         });
     };
 
@@ -34,10 +60,9 @@ pub fn NewRoutine() -> Element {
         event.prevent_default();
 
         let exercise_to_add = new_exercise.read().clone();
+        exercises.write().push(exercise_to_add);
 
-        new_routine.write().add_exercise(exercise_to_add);
-
-        new_exercise.set(Exercise::default());
+        new_exercise.set(DraftExercise::default());
         is_adding_exercise.set(false);
     };
 
@@ -53,8 +78,8 @@ pub fn NewRoutine() -> Element {
                         label { "Exercise Name:" }
                         input {
                             type: "text",
-                            value: "{new_exercise.read().name()}",
-                            oninput: move |event| new_exercise.write().set_name(event.value()),
+                            value: "{new_exercise.read().name}",
+                            oninput: move |event| new_exercise.write().name = event.value(),
                             required: true
                         }
                     }
@@ -63,21 +88,21 @@ pub fn NewRoutine() -> Element {
                         label { "Equipment:" }
                         input {
                             type: "text",
-                            value: "{new_exercise.read().equipment()}",
-                            oninput: move |event| new_exercise.write().set_equipment(event.value()),
+                            value: "{new_exercise.read().equipment}",
+                            oninput: move |event| new_exercise.write().equipment = event.value(),
                             required: true
                         }
                     }
 
-                    for (index, set) in new_exercise.read().get_sets().iter().enumerate() {
+                    for (index, reps) in new_exercise.read().sets.iter().enumerate() {
                         div {
                             label { "Reps:" }
                             input {
                                 type: "number",
-                                value: "{set.reps()}",
+                                value: "{reps}",
                                 oninput: move |event| {
                                     if let Ok(reps) = event.value().parse::<u8>() {
-                                        let _ = new_exercise.write().update_set_reps(index, reps);
+                                        new_exercise.write().sets[index] = reps;
                                     }
                                 }
                             }
@@ -86,7 +111,7 @@ pub fn NewRoutine() -> Element {
 
                     button {
                         type: "button",
-                        onclick: move |_| new_exercise.write().add_set(10),
+                        onclick: move |_| new_exercise.write().sets.push(10),
                         "Add A Set"
                     }
 
@@ -115,15 +140,15 @@ pub fn NewRoutine() -> Element {
 
                 input {
                     type: "text",
-                    value: "{new_routine.read().name()}",
-                    oninput: move |event| new_routine.write().set_name(event.value()),
+                    value: "{routine_name}",
+                    oninput: move |event| routine_name.set(event.value()),
                     required: true
                 }
 
-                for exercise in new_routine.read().get_exercises() {
+                for exercise in exercises.read().iter() {
                     div {
-                        p { "{exercise.name()}" }
-                        p { "Sets: {exercise.get_sets().len()}" }
+                        p { "{exercise.name}" }
+                        p { "Sets: {exercise.sets.len()}" }
                     }
                 }
 

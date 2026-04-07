@@ -72,6 +72,10 @@ where
             }
         }
     }
+
+    pub async fn get_all_routines(&self) -> Result<Vec<Routine>, RoutineRepositoryError> {
+        self.repo.get_all().await
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

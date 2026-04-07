@@ -1,11 +1,7 @@
-use std::sync::Arc;
-
-// The dioxus prelude contains a ton of common items used in dioxus apps. It's a good idea to import wherever you
-// need dioxus
 use dioxus::prelude::*;
-
-use domain::routine_repository::RoutineRepository;
-use storage::memory_routine_repository::MemoryRoutineRepository;
+use domain::routine::{
+    memory_routine_repository::MemoryRoutineRepository, service::RoutineService,
+};
 use views::{Blog, Home, NewRoutine};
 
 /// Define a components module that contains all shared components for our app.
@@ -60,8 +56,8 @@ fn main() {
 #[component]
 fn App() -> Element {
     use_context_provider(|| {
-        let repo: Arc<dyn RoutineRepository> = Arc::new(MemoryRoutineRepository::with_mock_data());
-        repo
+        let repo = MemoryRoutineRepository::new();
+        RoutineService::new(repo)
     });
 
     // The `rsx!` macro lets us define HTML inside of rust. It expands to an Element with all of our HTML inside.

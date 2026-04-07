@@ -6,7 +6,7 @@ pub use composition::*;
 pub use detailing::*;
 pub use management::*;
 
-use crate::routine::ports::RoutineRepository;
+use crate::routine::ports::{RoutineRepository, RoutineRepositoryError};
 use crate::routine::models::root::Routine;
 
 /// A facade service that combines routine management, composition, and detailing.
@@ -49,6 +49,10 @@ where
         query: &GetRoutineQuery,
     ) -> Result<Option<Routine>, GetRoutineError> {
         self.management.get_routine(query).await
+    }
+
+    pub async fn get_all_routines(&self) -> Result<Vec<Routine>, RoutineRepositoryError> {
+        self.management.get_all_routines().await
     }
 
     pub async fn add_exercise(
