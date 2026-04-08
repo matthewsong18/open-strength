@@ -18,7 +18,7 @@ pub fn NewRoutine() -> Element {
     let service = use_context::<RoutineService<MemoryRoutineRepository>>();
     let navigator = use_navigator();
 
-    let mut routine_name = use_signal(String::new);
+    let mut routine_name = use_signal(|| "Untitled Routine".to_string());
     let mut exercises = use_signal(Vec::<DraftExercise>::new);
 
     let mut new_exercise = use_signal(DraftExercise::default);
@@ -138,11 +138,14 @@ pub fn NewRoutine() -> Element {
             form {
                 onsubmit: save_routine,
 
-                input {
-                    type: "text",
-                    value: "{routine_name}",
-                    oninput: move |event| routine_name.set(event.value()),
-                    required: true
+                div {
+                    label { "Routine Name:" }
+                    input {
+                        type: "text",
+                        value: "{routine_name}",
+                        oninput: move |event| routine_name.set(event.value()),
+                        required: true
+                    }
                 }
 
                 for exercise in exercises.read().iter() {
@@ -152,15 +155,17 @@ pub fn NewRoutine() -> Element {
                     }
                 }
 
-                button {
-                    type: "button",
-                    onclick: move |_| is_adding_exercise.set(true),
-                    "Add Exercise"
-                }
+                div {
+                    button {
+                        type: "button",
+                        onclick: move |_| is_adding_exercise.set(true),
+                        "Add Exercise"
+                    }
 
-                button {
-                    type: "submit",
-                    "Save Routine"
+                    button {
+                        type: "submit",
+                        "Save Routine"
+                    }
                 }
             }
         }
