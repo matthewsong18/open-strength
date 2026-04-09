@@ -1,5 +1,7 @@
 use dioxus::prelude::*;
-use domain::routine::{memory_routine_repository::MemoryRoutineRepository, service::RoutineService};
+use domain::routine::{
+    memory_routine_repository::MemoryRoutineRepository, service::RoutineService,
+};
 
 use crate::Route;
 
@@ -11,13 +13,10 @@ pub fn Home() -> Element {
     let routines = use_resource(move || {
         let service_clone = service.clone();
 
-        async move {
-            service_clone
-                .get_all_routines()
-                .await
-                .unwrap_or_default()
-        }
+        async move { service_clone.get_all_routines().await.unwrap_or_default() }
     });
+
+    let navigator = use_navigator();
 
     rsx! {
         main {
@@ -26,12 +25,19 @@ pub fn Home() -> Element {
             section {
                 if let Some(routine_list) = routines.read().as_ref() {
 
-                    for r in routine_list {
+                    for (r, id) in routine_list.iter().map(|r| (r, r.id())) {
                         article {
                             h2 { "{r.name()}" }
 
                             p {
                                 "Number of Exercises: {r.get_exercises().len()}"
+                            }
+
+                            button {
+                                onclick: move |_| {
+                                    navigator.push(Route::ViewRoutine { id });
+                                },
+                                "View Routine"
                             }
 
                             button {

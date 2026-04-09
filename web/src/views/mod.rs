@@ -19,3 +19,4 @@ pub use blog::Blog;
 
 mod routine;
 pub use routine::NewRoutine;
+pub use routine::ViewRoutine;

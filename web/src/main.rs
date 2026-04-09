@@ -1,8 +1,10 @@
 use dioxus::prelude::*;
+use uuid::Uuid;
+
 use domain::routine::{
     memory_routine_repository::MemoryRoutineRepository, service::RoutineService,
 };
-use views::{Blog, Home, NewRoutine};
+use views::{Blog, Home, NewRoutine, ViewRoutine};
 
 /// Define a components module that contains all shared components for our app.
 mod components;
@@ -33,7 +35,10 @@ enum Route {
     Blog { id: i32 },
 
     #[route("/routine/new")]
-    NewRoutine {}
+    NewRoutine {},
+
+    #[route("/routine/:id")]
+    ViewRoutine { id: Uuid },
 }
 
 // We can import assets in dioxus with the `asset!` macro. This macro takes a path to an asset relative to the crate root.
