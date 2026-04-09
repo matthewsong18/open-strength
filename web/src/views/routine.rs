@@ -10,7 +10,13 @@ use crate::Route;
 struct DraftExercise {
     name: String,
     equipment: String,
-    sets: Vec<u8>,
+    sets: Vec<DraftSet>,
+}
+
+#[derive(Default, Clone, PartialEq)]
+struct DraftSet {
+    reps: u8,
+    weight: Option<u32>,
 }
 
 #[component]
@@ -36,17 +42,19 @@ pub fn NewRoutine() -> Element {
             let routine_id = create_cmd.routine_id();
 
             if service_clone.create_routine(&create_cmd).await.is_ok() {
-                for ex in exercise_list {
-                    let mut add_ex_cmd = AddExerciseToRoutineCommand::new(routine_id, ex.name);
-                    if !ex.equipment.is_empty() {
-                        add_ex_cmd = add_ex_cmd.with_equipment(ex.equipment);
+                for exercise in exercise_list {
+                    let mut add_ex_cmd =
+                        AddExerciseToRoutineCommand::new(routine_id, exercise.name);
+                    if !exercise.equipment.is_empty() {
+                        add_ex_cmd = add_ex_cmd.with_equipment(exercise.equipment);
                     }
                     // Currently we only support adding one set at a time or with_sets_and_reps if they are uniform.
                     // For simplicity, let's just use with_sets_and_reps if all reps are the same,
                     // or just use the first set's reps for all if they are uniform.
                     // The service currently doesn't support heterogeneous sets in a single command.
-                    if let Some(&reps) = ex.sets.first() {
-                        add_ex_cmd = add_ex_cmd.with_sets_and_reps(ex.sets.len() as u8, reps);
+                    if let Some(set) = exercise.sets.first() {
+                        add_ex_cmd =
+                            add_ex_cmd.with_sets_and_reps(exercise.sets.len() as u8, set.reps);
                     }
 
                     let _ = service_clone.add_exercise(&add_ex_cmd).await;
@@ -94,15 +102,29 @@ pub fn NewRoutine() -> Element {
                         }
                     }
 
-                    for (index, reps) in new_exercise.read().sets.iter().enumerate() {
+                    for (index, set) in new_exercise.read().sets.iter().enumerate() {
                         div {
                             label { "Reps:" }
                             input {
                                 type: "number",
-                                value: "{reps}",
+                                value: "{set.reps}",
                                 oninput: move |event| {
                                     if let Ok(reps) = event.value().parse::<u8>() {
-                                        new_exercise.write().sets[index] = reps;
+                                        new_exercise.write().sets[index].reps = reps;
+                                    }
+                                }
+                            }
+
+                            label { "Weight:" }
+                            input {
+                                type: "number",
+                                value: "{set.weight.unwrap_or_default()}",
+                                oninput: move |event| {
+                                    if let Ok(weight) = event.value().parse::<u32>() {
+                                        if weight == 0 {
+                                            return;
+                                        }
+                                        new_exercise.write().sets[index].weight = Some(weight);
                                     }
                                 }
                             }
@@ -111,7 +133,7 @@ pub fn NewRoutine() -> Element {
 
                     button {
                         type: "button",
-                        onclick: move |_| new_exercise.write().sets.push(10),
+                        onclick: move |_| new_exercise.write().sets.push(DraftSet { reps: 10, weight: None }),
                         "Add A Set"
                     }
 
